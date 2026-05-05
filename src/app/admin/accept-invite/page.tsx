@@ -12,6 +12,10 @@ import { useEffect, useState } from "react";
  * - Site URL: https://your-domain.com
  * - Redirect URLs: https://your-domain.com/admin/accept-invite
  * This allows Supabase to redirect invite tokens to our custom page.
+ *
+ * @supabase/ssr createBrowserClient uses flowType: "pkce", which does not parse
+ * implicit grant tokens in the URL hash. Invites arrive as #access_token=…&type=invite;
+ * we read the hash and call auth.setSession() so the session is established.
  */
 
 type Phase = "loading" | "invalid" | "form" | "success";
@@ -40,25 +44,58 @@ export default function AcceptInvitePage() {
     const supabase = createClient();
     let cancelled = false;
 
-    (async () => {
-      for (let i = 0; i < 20; i++) {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        if (session?.user) {
-          const meta = session.user.user_metadata as Record<string, unknown> | undefined;
-          const fn = meta?.full_name;
-          if (typeof fn === "string" && fn) setFullName(fn);
-          if (!cancelled) setPhase("form");
+    async function processInviteToken() {
+      const hash = window.location.hash;
+      if (!hash) {
+        if (!cancelled) setPhase("invalid");
+        return;
+      }
+
+      const params = new URLSearchParams(hash.startsWith("#") ? hash.slice(1) : hash);
+
+      const accessToken = params.get("access_token");
+      const refreshToken = params.get("refresh_token");
+      const type = params.get("type");
+
+      if (!accessToken || !refreshToken) {
+        if (!cancelled) setPhase("invalid");
+        return;
+      }
+
+      if (type !== "invite" && type !== "signup") {
+        if (!cancelled) setPhase("invalid");
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+
+        if (error || !data.session?.user) {
+          console.error("setSession error:", error);
+          if (!cancelled) setPhase("invalid");
           return;
         }
-        await new Promise((r) => setTimeout(r, 250));
+
+        const user = data.session.user;
+        const meta = user.user_metadata as Record<string, unknown> | undefined;
+        const nameRaw = meta?.full_name ?? meta?.name ?? "";
+        const name = typeof nameRaw === "string" ? nameRaw : "";
+
+        if (name && !cancelled) setFullName(name);
+
+        window.history.replaceState(null, "", window.location.pathname);
+
+        if (!cancelled) setPhase("form");
+      } catch (err) {
+        console.error("Invite processing error:", err);
+        if (!cancelled) setPhase("invalid");
       }
-      const hash = typeof window !== "undefined" ? window.location.hash : "";
-      const looksInvite =
-        hash.includes("access_token") || hash.includes("type=invite") || hash.includes("type=signup");
-      if (!cancelled) setPhase(looksInvite ? "invalid" : "invalid");
-    })();
+    }
+
+    void processInviteToken();
 
     return () => {
       cancelled = true;
@@ -78,17 +115,23 @@ export default function AcceptInvitePage() {
     }
     setSubmitting(true);
     const supabase = createClient();
-    const { error: upErr } = await supabase.auth.updateUser({
-      password,
-      data: { full_name: fullName.trim() },
-    });
-    setSubmitting(false);
-    if (upErr) {
-      setError(upErr.message);
-      return;
+
+    try {
+      const { error: upErr } = await supabase.auth.updateUser({
+        password,
+        data: { full_name: fullName.trim() },
+      });
+
+      if (upErr) {
+        setError(upErr.message);
+        return;
+      }
+
+      await supabase.auth.signOut();
+      setPhase("success");
+    } finally {
+      setSubmitting(false);
     }
-    await supabase.auth.signOut();
-    setPhase("success");
   }
 
   if (phase === "loading") {
@@ -135,13 +178,16 @@ export default function AcceptInvitePage() {
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#1D9E75]/15 text-2xl">
             ✓
           </div>
-          <h1 className="mt-4 font-sans text-xl font-semibold text-[#1a1a2e]">Account activated!</h1>
+          <h1 className="mt-4 font-sans text-xl font-semibold text-[#1a1a2e]">Password set successfully!</h1>
           <p className="mt-2 font-sans text-sm text-[#555]">
-            Welcome to the Chromax-MCR admin dashboard. Sign in with your new password to continue.
+            You can now sign in with your new password.
           </p>
-          <Button className="mt-6 w-full" onClick={() => (window.location.href = "/login")}>
-            Sign in to continue
-          </Button>
+          <Link
+            href="/login"
+            className="mt-6 inline-flex w-full items-center justify-center rounded-lg bg-(--color-gold) px-4 py-2.5 font-sans text-[13px] font-medium text-(--color-navy) hover:bg-[#D49215]"
+          >
+            Go to login
+          </Link>
         </div>
       </div>
     );
