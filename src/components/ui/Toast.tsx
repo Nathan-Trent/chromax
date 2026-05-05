@@ -1,4 +1,7 @@
+"use client";
+
 import type { ReactElement, SVGProps } from "react";
+import { useEffect, useRef } from "react";
 
 export interface ToastProps {
   variant: "success" | "error" | "warning" | "info";
@@ -91,7 +94,17 @@ export function Toast({
   onDismiss,
   duration,
 }: ToastProps) {
-  void duration;
+  const dismissed = useRef(false);
+
+  useEffect(() => {
+    dismissed.current = false;
+    if (!duration || !onDismiss || variant === "error") return undefined;
+    const t = window.setTimeout(() => {
+      if (!dismissed.current) onDismiss();
+    }, duration);
+    return () => window.clearTimeout(t);
+  }, [duration, onDismiss, variant, message]);
+
   const Icon = icons[variant];
 
   return (
@@ -109,7 +122,10 @@ export function Toast({
       {onDismiss ? (
         <button
           type="button"
-          onClick={onDismiss}
+          onClick={() => {
+            dismissed.current = true;
+            onDismiss();
+          }}
           className="shrink-0 rounded-lg p-1 text-current opacity-70 transition-opacity duration-150 ease-in-out motion-reduce:transition-none hover:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-current focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
           aria-label="Dismiss notification"
         >

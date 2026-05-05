@@ -4,10 +4,11 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Toast } from "@/components/ui/Toast";
+import { useAlertDialog } from "@/components/ui/useAlertDialog";
 import { mergeHomepageContent, type HomepageContent } from "@/lib/content/homepage";
 import type { ContentPageStatus } from "@/types/content-page";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState, type Dispatch, type SetStateAction } from "react";
 
 export interface ContentEditorProps {
   pageKey: string;
@@ -158,7 +159,7 @@ function HomepageEditor({
   setHp,
 }: {
   hp: HomepageContent;
-  setHp: React.Dispatch<React.SetStateAction<HomepageContent>>;
+  setHp: Dispatch<SetStateAction<HomepageContent>>;
 }) {
   const [open, setOpen] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(HP_SECTIONS.map((s) => [s.id, Boolean(s.defaultOpen)])),
@@ -210,6 +211,7 @@ function HomepageEditor({
 
 export function ContentEditor({ pageKey, initialContent, initialStatus }: ContentEditorProps) {
   const router = useRouter();
+  const { confirm, DialogComponent } = useAlertDialog();
   const [status, setStatus] = useState<ContentPageStatus>(initialStatus);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -230,11 +232,11 @@ export function ContentEditor({ pageKey, initialContent, initialStatus }: Conten
     JSON.stringify(initialContent && Object.keys(initialContent).length ? initialContent : {}, null, 2),
   );
 
-  useEffect(() => {
-    if (!success) return;
-    const t = window.setTimeout(() => setSuccess(null), 3000);
-    return () => window.clearTimeout(t);
-  }, [success]);
+  const initialJsonRaw = useMemo(
+    () =>
+      JSON.stringify(initialContent && Object.keys(initialContent).length ? initialContent : {}, null, 2),
+    [initialContent],
+  );
 
   const mode = useMemo(() => {
     if (pageKey === "homepage") return "homepage" as const;
@@ -278,6 +280,62 @@ export function ContentEditor({ pageKey, initialContent, initialStatus }: Conten
     }
   }
 
+  const initialSnapshot = useMemo((): Record<string, unknown> => {
+    if (pageKey === "homepage") {
+      const m = mergeHomepageContent(initialContent);
+      const t = { ...m };
+      for (const k of Object.keys(t) as (keyof HomepageContent)[]) {
+        t[k] = t[k].trim();
+      }
+      return { ...initialContent, ...t };
+    }
+    if (pageKey === "about") {
+      return {
+        ...initialContent,
+        story_p1: str(initialContent.story_p1).trim(),
+        story_p2: str(initialContent.story_p2).trim(),
+        story_p3: str(initialContent.story_p3).trim(),
+      };
+    }
+    if (pageKey === "contact") {
+      return {
+        ...initialContent,
+        address: str(initialContent.address).trim(),
+        email: str(initialContent.email).trim(),
+        whatsapp: str(initialContent.whatsapp).trim(),
+      };
+    }
+    const raw = initialContent && Object.keys(initialContent).length ? initialContent : {};
+    return JSON.parse(JSON.stringify(raw)) as Record<string, unknown>;
+  }, [pageKey, initialContent]);
+
+  const isDirty = useMemo(() => {
+    if (status !== initialStatus) return true;
+    if (mode === "generic") {
+      return jsonRaw.trim() !== initialJsonRaw.trim();
+    }
+    try {
+      return JSON.stringify(buildContent()) !== JSON.stringify(initialSnapshot);
+    } catch {
+      return true;
+    }
+  }, [
+    status,
+    initialStatus,
+    mode,
+    jsonRaw,
+    initialJsonRaw,
+    initialSnapshot,
+    hp,
+    story1,
+    story2,
+    story3,
+    address,
+    email,
+    whatsapp,
+    initialContent,
+  ]);
+
   async function save() {
     setErr(null);
     setInfo(null);
@@ -316,18 +374,50 @@ export function ContentEditor({ pageKey, initialContent, initialStatus }: Conten
 
   return (
     <div className="space-y-6">
+      {DialogComponent}
       {err ? <Toast variant="error" message={err} onDismiss={() => setErr(null)} /> : null}
       {success ? (
-        <Toast variant="success" message={success} onDismiss={() => setSuccess(null)} />
+        <Toast
+          variant="success"
+          message={success}
+          duration={3000}
+          onDismiss={() => setSuccess(null)}
+        />
       ) : null}
-      {info ? <Toast variant="info" message={info} onDismiss={() => setInfo(null)} /> : null}
+      {info ? (
+        <Toast variant="info" message={info} duration={4000} onDismiss={() => setInfo(null)} />
+      ) : null}
+
+      {isDirty ? (
+        <div className="rounded-xl border border-[#BA7517]/40 bg-[#FAEEDA]/50 px-4 py-3 font-sans text-sm text-[#633806]">
+          You have unsaved changes on this page. Save to avoid losing edits.
+        </div>
+      ) : null}
 
       <section className="rounded-xl bg-white p-6">
         <Select
           label="Status"
           options={STATUS_OPTS.map((o) => ({ value: o.value, label: o.label }))}
           value={status}
-          onChange={(e) => setStatus(e.target.value as ContentPageStatus)}
+          onChange={(e) =>
+            void (async () => {
+              const next = e.target.value as ContentPageStatus;
+              if (next === status) return;
+              if (isDirty) {
+                const proceed = await confirm({
+                  title: "Unsaved changes",
+                  message:
+                    "You have unsaved edits. Change status anyway? Remember to click Save afterward.",
+                  confirmLabel: "Change status",
+                  cancelLabel: "Cancel",
+                  confirmVariant: "navy",
+                  icon: "warning",
+                });
+                if (!proceed) return;
+              }
+              setStatus(next);
+            })()
+          }
         />
       </section>
 

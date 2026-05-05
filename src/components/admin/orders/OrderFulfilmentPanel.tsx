@@ -2,6 +2,8 @@
 
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { Toast } from "@/components/ui/Toast";
+import { showConfirm } from "@/components/ui/GlobalAlertDialog";
 import type { OrderStatus } from "@/types/order";
 import { nextOrderStatus } from "@/lib/orders/order-flow";
 import { useRouter } from "next/navigation";
@@ -49,12 +51,12 @@ export function OrderFulfilmentPanel({
 }: OrderFulfilmentPanelProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ variant: "success" | "error" | "info"; msg: string } | null>(
+    null,
+  );
   const [tracking, setTracking] = useState(initialTracking ?? "");
   const [courier, setCourier] = useState(initialCourier ?? "");
   const [cancelLoading, setCancelLoading] = useState(false);
-  const [showReqConfirm, setShowReqConfirm] = useState(false);
-  const [showApprConfirm, setShowApprConfirm] = useState(false);
 
   const next = nextOrderStatus(status);
   const label = advanceLabel(status);
@@ -68,7 +70,7 @@ export function OrderFulfilmentPanel({
 
   async function submitAdvance() {
     if (!next) return;
-    setErr(null);
+    setToast(null);
     setLoading(true);
     try {
       const body: Record<string, unknown> = { status: next };
@@ -83,9 +85,10 @@ export function OrderFulfilmentPanel({
       });
       const json = (await res.json()) as { error?: string };
       if (!res.ok) {
-        setErr(json.error ?? "Update failed");
+        setToast({ variant: "error", msg: json.error ?? "Update failed" });
         return;
       }
+      setToast({ variant: "success", msg: "Order updated." });
       router.refresh();
     } finally {
       setLoading(false);
@@ -93,7 +96,7 @@ export function OrderFulfilmentPanel({
   }
 
   async function submitCancelAction(action: "request" | "approve") {
-    setErr(null);
+    setToast(null);
     setCancelLoading(true);
     try {
       const res = await fetch(`/api/admin/orders/${orderId}/cancellation`, {
@@ -103,11 +106,16 @@ export function OrderFulfilmentPanel({
       });
       const json = (await res.json()) as { error?: string };
       if (!res.ok) {
-        setErr(json.error ?? "Cancellation action failed");
+        setToast({ variant: "error", msg: json.error ?? "Cancellation action failed" });
         return;
       }
-      setShowReqConfirm(false);
-      setShowApprConfirm(false);
+      setToast({
+        variant: action === "request" ? "info" : "info",
+        msg:
+          action === "request"
+            ? "Cancellation request sent for review."
+            : "Cancellation approved. Order marked cancelled.",
+      });
       router.refresh();
     } finally {
       setCancelLoading(false);
@@ -116,8 +124,13 @@ export function OrderFulfilmentPanel({
 
   return (
     <div className="space-y-4">
-      {err ? (
-        <p className="rounded-lg bg-[#993C1D]/10 px-3 py-2 font-sans text-sm text-[#5C240F]">{err}</p>
+      {toast ? (
+        <Toast
+          variant={toast.variant}
+          message={toast.msg}
+          duration={toast.variant === "error" ? undefined : 3000}
+          onDismiss={() => setToast(null)}
+        />
       ) : null}
 
       {canAdvance && label ? (
@@ -147,87 +160,53 @@ export function OrderFulfilmentPanel({
         <div className="border-t border-[#E8E8E4] pt-4">
           {canCancelRequest && !hasPendingCancel ? (
             <div className="space-y-2">
-              {showReqConfirm ? (
-                <div className="rounded-lg border border-[#E8E8E4] bg-[#F5F0E8] p-3">
-                  <p className="font-sans text-sm text-[#555]">
-                    Request cancellation? Your chief accountant will be notified to review.
-                  </p>
-                  <div className="mt-3 flex gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      disabled={cancelLoading}
-                      onClick={() => setShowReqConfirm(false)}
-                    >
-                      Back
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      className="border border-[#993C1D] bg-transparent text-[#5C240F] hover:bg-[#993C1D]/10"
-                      loading={cancelLoading}
-                      disabled={cancelLoading}
-                      onClick={() => void submitCancelAction("request")}
-                    >
-                      Confirm request
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="border-[#993C1D] text-[#5C240F]"
-                  disabled={cancelLoading}
-                  onClick={() => setShowReqConfirm(true)}
-                >
-                  Request cancellation
-                </Button>
-              )}
+              <Button
+                type="button"
+                variant="outline"
+                className="border-[#993C1D] text-[#5C240F]"
+                disabled={cancelLoading}
+                onClick={() =>
+                  void (async () => {
+                    const ok = await showConfirm({
+                      title: "Request cancellation",
+                      message:
+                        "Your chief accountant will be notified to review this request. Continue?",
+                      confirmLabel: "Request cancellation",
+                      confirmVariant: "danger",
+                      icon: "warning",
+                    });
+                    if (ok) void submitCancelAction("request");
+                  })()
+                }
+              >
+                Request cancellation
+              </Button>
             </div>
           ) : null}
 
           {canCancelApprove && hasPendingCancel ? (
             <div className="mt-3 space-y-2">
-              {showApprConfirm ? (
-                <div className="rounded-lg border border-[#E8E8E4] bg-[#F5F0E8] p-3">
-                  <p className="font-sans text-sm text-[#555]">
-                    Approve cancellation for {customerEmail}? Order will be marked cancelled.
-                  </p>
-                  <div className="mt-3 flex gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      disabled={cancelLoading}
-                      onClick={() => setShowApprConfirm(false)}
-                    >
-                      Back
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      className="border border-[#993C1D] bg-transparent text-[#5C240F] hover:bg-[#993C1D]/10"
-                      loading={cancelLoading}
-                      disabled={cancelLoading}
-                      onClick={() => void submitCancelAction("approve")}
-                    >
-                      Approve cancellation
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="border-[#993C1D] text-[#5C240F]"
-                  disabled={cancelLoading}
-                  onClick={() => setShowApprConfirm(true)}
-                >
-                  Approve cancellation
-                </Button>
-              )}
+              <Button
+                type="button"
+                variant="outline"
+                className="border-[#993C1D] text-[#5C240F]"
+                disabled={cancelLoading}
+                onClick={() =>
+                  void (async () => {
+                    const ok = await showConfirm({
+                      title: "Approve cancellation",
+                      message: `Approve cancellation for ${customerEmail}? The order will be marked cancelled.`,
+                      confirmLabel: "Approve cancellation",
+                      cancelLabel: "Back",
+                      confirmVariant: "danger",
+                      icon: "warning",
+                    });
+                    if (ok) void submitCancelAction("approve");
+                  })()
+                }
+              >
+                Approve cancellation
+              </Button>
             </div>
           ) : null}
         </div>

@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Toast } from "@/components/ui/Toast";
+import { showConfirm } from "@/components/ui/GlobalAlertDialog";
 import type { B2BOfferCurrency } from "@/types/b2b-offer";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -37,11 +38,9 @@ export function B2BOfferRespondPanel({
   const [err, setErr] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
 
-  const [showAccept, setShowAccept] = useState(false);
   const [counterOpen, setCounterOpen] = useState(false);
   const [counterPrice, setCounterPrice] = useState("");
   const [counterMsg, setCounterMsg] = useState("");
-  const [showDecline, setShowDecline] = useState(false);
 
   const counterNum = Number.parseFloat(counterPrice);
   const counterValid = Number.isFinite(counterNum) && counterNum > 0;
@@ -85,51 +84,39 @@ export function B2BOfferRespondPanel({
         <Toast variant="error" message={err} onDismiss={() => setErr(null)} />
       ) : null}
       {ok ? (
-        <Toast variant="info" message={ok} onDismiss={() => setOk(null)} />
+        <Toast
+          variant="success"
+          message={ok}
+          duration={3000}
+          onDismiss={() => setOk(null)}
+        />
       ) : null}
 
       <div className="space-y-3">
         <p className="font-sans text-[11px] font-medium uppercase tracking-widest text-[#888]">
           Accept offer
         </p>
-        {showAccept ? (
-          <div className="rounded-xl border border-[#E8E8E4] bg-[#F5F0E8] p-3">
-            <p className="font-sans text-sm text-[#555]">
-              Are you sure? This will lock the price and send a payment link to the buyer.
-            </p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={loading}
-                onClick={() => setShowAccept(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                className="bg-[#0F6E56] text-white hover:bg-[#0a5c48]"
-                loading={loading}
-                disabled={loading}
-                onClick={() => void postRespond({ action: "accept" })}
-              >
-                Confirm accept at {formatMoney(offeredPrice, currency)}
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <Button
-            type="button"
-            size="sm"
-            className="bg-[#0F6E56] text-white hover:bg-[#0a5c48]"
-            disabled={loading}
-            onClick={() => setShowAccept(true)}
-          >
-            Accept at {formatMoney(offeredPrice, currency)}
-          </Button>
-        )}
+        <Button
+          type="button"
+          size="sm"
+          className="bg-[#0F6E56] text-white hover:bg-[#0a5c48]"
+          disabled={loading}
+          onClick={() =>
+            void (async () => {
+              const confirmed = await showConfirm({
+                title: "Accept offer",
+                message:
+                  "This will lock the price and send a payment link to the buyer. Continue?",
+                confirmLabel: `Accept at ${formatMoney(offeredPrice, currency)}`,
+                confirmVariant: "teal",
+                icon: "warning",
+              });
+              if (confirmed) void postRespond({ action: "accept" });
+            })()
+          }
+        >
+          Accept at {formatMoney(offeredPrice, currency)}
+        </Button>
       </div>
 
       <div className="border-t border-[#E8E8E4] pt-4">
@@ -192,43 +179,27 @@ export function B2BOfferRespondPanel({
         <p className="mb-2 font-sans text-[11px] font-medium uppercase tracking-widest text-[#888]">
           Decline
         </p>
-        {showDecline ? (
-          <div className="rounded-xl border border-[#E8E8E4] bg-[#F5F0E8] p-3">
-            <p className="font-sans text-sm text-[#555]">Decline this offer permanently?</p>
-            <div className="mt-3 flex gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={loading}
-                onClick={() => setShowDecline(false)}
-              >
-                Back
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="border-[#993C1D] text-[#5C240F]"
-                loading={loading}
-                disabled={loading}
-                onClick={() => void postRespond({ action: "decline" })}
-              >
-                Confirm decline
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <Button
-            type="button"
-            variant="outline"
-            className="border-[#993C1D] text-[#5C240F]"
-            disabled={loading}
-            onClick={() => setShowDecline(true)}
-          >
-            Decline offer
-          </Button>
-        )}
+        <Button
+          type="button"
+          variant="outline"
+          className="border-[#993C1D] text-[#5C240F]"
+          disabled={loading}
+          onClick={() =>
+            void (async () => {
+              const confirmed = await showConfirm({
+                title: "Decline offer",
+                message: "Decline this offer permanently? The buyer will not be able to accept it later.",
+                confirmLabel: "Decline offer",
+                cancelLabel: "Keep offer",
+                confirmVariant: "danger",
+                icon: "warning",
+              });
+              if (confirmed) void postRespond({ action: "decline" });
+            })()
+          }
+        >
+          Decline offer
+        </Button>
       </div>
     </div>
   );

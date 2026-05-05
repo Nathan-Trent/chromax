@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Toast } from "@/components/ui/Toast";
+import { showConfirm } from "@/components/ui/GlobalAlertDialog";
 import type { Product } from "@/lib/supabase/queries/products";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -68,6 +69,7 @@ export function ProductForm({ product, mode }: ProductFormProps) {
   const [info, setInfo] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [archiveLoading, setArchiveLoading] = useState(false);
 
   const [name, setName] = useState(product?.name ?? "");
   const [slug, setSlug] = useState(product?.slug ?? "");
@@ -100,11 +102,7 @@ export function ProductForm({ product, mode }: ProductFormProps) {
     setSlug(slugify(name));
   }, [name, mode]);
 
-  useEffect(() => {
-    if (!success) return;
-    const t = window.setTimeout(() => setSuccess(null), 3000);
-    return () => window.clearTimeout(t);
-  }, [success]);
+
 
   function parseOptNumber(raw: string): number | null {
     const t = raw.trim();
@@ -194,6 +192,38 @@ export function ProductForm({ product, mode }: ProductFormProps) {
     }
   }
 
+  async function archiveProduct() {
+    if (!product) return;
+    const ok = await showConfirm({
+      title: "Archive product",
+      message: `Archive “${product.name}”? It will be removed from the storefront and marked as archived.`,
+      confirmLabel: "Archive product",
+      cancelLabel: "Keep live",
+      confirmVariant: "danger",
+      icon: "warning",
+    });
+    if (!ok) return;
+    setError(null);
+    setArchiveLoading(true);
+    try {
+      const res = await fetch(`/api/admin/products/${product.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "archived" }),
+      });
+      const json = (await res.json()) as { error?: string };
+      if (!res.ok) {
+        setError(json.error ?? "Could not archive product");
+        return;
+      }
+      setSuccess("Product archived.");
+      router.push("/admin/products");
+      router.refresh();
+    } finally {
+      setArchiveLoading(false);
+    }
+  }
+
   const areaBase =
     "w-full rounded-lg border border-[#D0D0CA] px-3.5 py-2.5 font-sans text-sm text-[#333333] placeholder:text-[#999] focus:outline-none focus:ring-2 focus:ring-[var(--color-gold)] focus:border-[var(--color-gold)]";
 
@@ -211,7 +241,12 @@ export function ProductForm({ product, mode }: ProductFormProps) {
       ) : null}
       {success ? (
         <div className="mb-4">
-          <Toast variant="success" message={success} onDismiss={() => setSuccess(null)} />
+          <Toast
+            variant="success"
+            message={success}
+            duration={3000}
+            onDismiss={() => setSuccess(null)}
+          />
         </div>
       ) : null}
 
@@ -396,6 +431,27 @@ export function ProductForm({ product, mode }: ProductFormProps) {
           </div>
         ) : null}
       </section>
+
+      {mode === "edit" && product && product.status !== "archived" ? (
+        <section className="mb-28 rounded-xl border border-[#993C1D]/30 bg-white p-6">
+          <p className="mb-4 font-sans text-[11px] font-medium uppercase tracking-widest text-[#993C1D]">
+            Danger zone
+          </p>
+          <p className="mb-4 font-sans text-sm text-[#555]">
+            Archive this product if it should no longer appear in the catalogue.
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            loading={archiveLoading}
+            disabled={archiveLoading || loading}
+            className="border-[#993C1D] text-[#5C240F]"
+            onClick={() => void archiveProduct()}
+          >
+            Archive product
+          </Button>
+        </section>
+      ) : null}
 
       <div className="fixed bottom-0 left-0 right-0 z-30 flex flex-col gap-2 border-t border-[#E8E8E4] bg-white p-4 sm:flex-row sm:flex-wrap sm:justify-end lg:left-[240px]">
         <Button

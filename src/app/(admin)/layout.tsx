@@ -1,5 +1,6 @@
 import { SessionExpiryWatcher } from "@/components/SessionExpiryWatcher";
 import { AdminShell } from "@/components/admin/AdminShell";
+import { GlobalAlertDialog } from "@/components/ui/GlobalAlertDialog";
 import { parseUserRoleRows } from "@/lib/auth/parse-user-roles";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
@@ -52,6 +53,7 @@ export default async function AdminGroupLayout({
   return (
     <>
       <SessionExpiryWatcher />
+      <GlobalAlertDialog />
       <AdminShell user={{ id: userId, email }} roles={roles}>
         {children}
       </AdminShell>

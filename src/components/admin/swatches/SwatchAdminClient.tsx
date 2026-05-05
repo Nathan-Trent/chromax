@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
+import { showConfirm } from "@/components/ui/GlobalAlertDialog";
 import { Toast } from "@/components/ui/Toast";
 import type {
   ColourSwatchRow,
@@ -125,7 +126,15 @@ export function SwatchAdminClient({
   }
 
   async function softDelete(id: string) {
-    if (!confirm("Deactivate this swatch? It will be hidden from the Colour Lab.")) return;
+    const ok = await showConfirm({
+      title: "Deactivate swatch",
+      message:
+        "This will deactivate the swatch. It will be hidden from the Colour Lab until it is activated again.",
+      confirmLabel: "Deactivate",
+      confirmVariant: "danger",
+      icon: "warning",
+    });
+    if (!ok) return;
     setLoadingRow(id);
     setError(null);
     try {

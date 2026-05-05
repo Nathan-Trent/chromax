@@ -7,11 +7,11 @@ import {
 } from "@/lib/admin/role-permission-matrix";
 import { Badge } from "@/components/ui/Badge";
 import { Input } from "@/components/ui/Input";
-import { Modal } from "@/components/ui/Modal";
 import { Select } from "@/components/ui/Select";
 import { Table } from "@/components/ui/Table";
 import { Tabs } from "@/components/ui/Tabs";
 import { Toast } from "@/components/ui/Toast";
+import { showConfirm, showPrompt } from "@/components/ui/GlobalAlertDialog";
 import type {
   CustomerDashboardRow,
   PendingInviteRow,
@@ -20,7 +20,7 @@ import type {
 import type { Role, RolePermissions } from "@/types/role";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Fragment, useEffect, useMemo, useState, type ReactElement } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 
 function IconLock({ className = "inline h-4 w-4 shrink-0" }: { className?: string }) {
   return (
@@ -103,8 +103,6 @@ const btnNavy = `${btnBase}
   focus-visible:outline-[#1a1a2e]
 `.trim().replace(/\s+/g, " ");
 
-const DESTRUCTIVE_CONFIRM_ACTIONS = new Set(["delete-staff", "delete-role", "revoke-invite"]);
-
 export interface UsersRolesClientProps {
   activeStaff: StaffMemberRow[];
   pendingInvites: PendingInviteRow[];
@@ -128,7 +126,9 @@ export function UsersRolesClient({
   const [pending, setPending] = useState(initialPending);
   const [customers, setCustomers] = useState(initialCustomers);
   const [err, setErr] = useState<string | null>(null);
-  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [toastFeedback, setToastFeedback] = useState<{ variant: "success" | "info"; message: string } | null>(
+    null,
+  );
   const [openUserId, setOpenUserId] = useState<string | null>(null);
   const [rolePick, setRolePick] = useState<Record<string, string[]>>({});
 
@@ -143,28 +143,12 @@ export function UsersRolesClient({
   const [permState, setPermState] = useState<RolePermissions>(() => emptyPermissions());
   const [viewRole, setViewRole] = useState<Role | null>(null);
 
-  const [suspendModal, setSuspendModal] = useState<
-    null | { kind: "staff" | "customer"; id: string; email: string }
-  >(null);
-  const [suspendReason, setSuspendReason] = useState("");
-
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
-  const [confirmingAction, setConfirmingAction] = useState<{
-    userId: string;
-    action: string;
-    label: string;
-  } | null>(null);
-
   const [customerFilter, setCustomerFilter] = useState<CustomerFilter>("all");
   const [customerSearch, setCustomerSearch] = useState("");
 
   const [noteEditId, setNoteEditId] = useState<string | null>(null);
   const [noteDraft, setNoteDraft] = useState("");
-
-  const [customerDelete, setCustomerDelete] = useState<
-    null | { id: string; email: string; step: 1 | 2 }
-  >(null);
-  const [customerDeleteTyping, setCustomerDeleteTyping] = useState("");
 
   useEffect(() => {
     if (!isSuperAdminViewer && activeTab === "customers") setActiveTab("staff");
@@ -229,9 +213,64 @@ export function UsersRolesClient({
     }
   }, [customers, customerFilter, customerSearch]);
 
-  function toastOk(msg: string) {
-    setSuccessMsg(msg);
+  function toastSuccess(message: string) {
     setErr(null);
+    setToastFeedback({ variant: "success", message });
+  }
+
+  function toastNeutral(message: string) {
+    setErr(null);
+    setToastFeedback({ variant: "info", message });
+  }
+
+  async function suspendStaffFromDialog(email: string, id: string) {
+    const reason = await showPrompt({
+      title: `Suspend ${email}`,
+      message:
+        "This user will be blocked from signing in immediately. Enter a reason (optional):",
+      promptPlaceholder: "Reason for suspension",
+      confirmLabel: "Suspend account",
+      confirmVariant: "danger",
+      icon: "warning",
+    });
+    if (reason === null) return;
+    const key = `suspend-${id}`;
+    setLoadingAction(key);
+    try {
+      const ok = await patchUser(id, { action: "suspend", reason: reason.trim() || undefined });
+      if (ok) {
+        toastNeutral("Staff member suspended.");
+        router.refresh();
+      }
+    } finally {
+      setLoadingAction(null);
+    }
+  }
+
+  async function suspendCustomerFromDialog(email: string, id: string) {
+    const reason = await showPrompt({
+      title: "Suspend customer",
+      message: `This will block ${email} from signing in. Enter a reason (optional):`,
+      promptPlaceholder: "Reason for suspension",
+      confirmLabel: "Suspend",
+      confirmVariant: "danger",
+      icon: "warning",
+    });
+    if (reason === null) return;
+    const key = `suspend-customer-${id}`;
+    setLoadingAction(key);
+    try {
+      const ok = await patchUser(id, {
+        action: "suspend_customer",
+        reason: reason.trim() || undefined,
+      });
+      if (ok) {
+        toastNeutral("Customer suspended.");
+        router.refresh();
+      }
+    } finally {
+      setLoadingAction(null);
+    }
   }
 
   async function patchUser(id: string, body: Record<string, unknown>): Promise<boolean> {
@@ -287,7 +326,7 @@ export function UsersRolesClient({
         delete n[userId];
         return n;
       });
-      toastOk("Roles updated.");
+      toastSuccess("Roles updated.");
       router.refresh();
     } finally {
       setLoadingAction(null);
@@ -318,7 +357,7 @@ export function UsersRolesClient({
       setInviteOpen(false);
       setInviteEmail("");
       setInviteRoleId("");
-      toastOk("Invitation sent.");
+      toastSuccess("Invitation sent.");
       router.refresh();
     } finally {
       setLoadingAction(null);
@@ -328,7 +367,6 @@ export function UsersRolesClient({
   async function runRevokeInvite(inv: PendingInviteRow) {
     const key = `revoke-${inv.id}`;
     setErr(null);
-    setConfirmingAction(null);
     setLoadingAction(key);
     try {
       const res = await fetch(`/api/admin/users/${inv.id}?type=staff`, { method: "DELETE" });
@@ -337,7 +375,7 @@ export function UsersRolesClient({
         setErr(json.error ?? "Revoke failed");
         return;
       }
-      toastOk("Invitation revoked.");
+      toastNeutral("Invitation revoked.");
       router.refresh();
     } finally {
       setLoadingAction(null);
@@ -361,29 +399,8 @@ export function UsersRolesClient({
         setErr(json.error ?? "Resend failed");
         return;
       }
-      toastOk("Invitation resent.");
+      toastSuccess("Invitation resent.");
       router.refresh();
-    } finally {
-      setLoadingAction(null);
-    }
-  }
-
-  async function submitSuspendModal() {
-    if (!suspendModal) return;
-    const { kind, id } = suspendModal;
-    const reason = suspendReason.trim() || undefined;
-    setLoadingAction("suspend-submit");
-    try {
-      const ok =
-        kind === "staff"
-          ? await patchUser(id, { action: "suspend", reason })
-          : await patchUser(id, { action: "suspend_customer", reason });
-      if (ok) {
-        toastOk(kind === "staff" ? "Staff member suspended." : "Customer suspended.");
-        setSuspendModal(null);
-        setSuspendReason("");
-        router.refresh();
-      }
     } finally {
       setLoadingAction(null);
     }
@@ -464,7 +481,7 @@ export function UsersRolesClient({
         }
       }
       setRoleFormOpen(false);
-      toastOk("Role saved.");
+      toastSuccess("Role saved.");
       router.refresh();
     } finally {
       setLoadingAction(null);
@@ -474,7 +491,6 @@ export function UsersRolesClient({
   async function runDeleteRole(role: Role) {
     setLoadingAction(`delete-role-exec-${role.id}`);
     setErr(null);
-    setConfirmingAction(null);
     try {
       const res = await fetch(`/api/admin/roles/${role.id}`, { method: "DELETE" });
       const json = (await res.json()) as { error?: string };
@@ -483,7 +499,7 @@ export function UsersRolesClient({
         return;
       }
       setRolesLocal((rs) => rs.filter((r) => r.id !== role.id));
-      toastOk("Role deleted.");
+      toastNeutral("Role deleted.");
       router.refresh();
     } finally {
       setLoadingAction(null);
@@ -496,7 +512,7 @@ export function UsersRolesClient({
     try {
       const ok = await patchUser(userId, { action: "unsuspend" });
       if (ok) {
-        toastOk("Suspension lifted.");
+        toastSuccess("Suspension lifted.");
         router.refresh();
       }
     } finally {
@@ -507,13 +523,12 @@ export function UsersRolesClient({
   async function runStaffPasswordReset(userId: string, email: string) {
     const key = `reset-staff-${userId}`;
     setLoadingAction(key);
-    setConfirmingAction(null);
     try {
       const ok = await patchUser(userId, {
         action: "force_password_reset",
         email,
       });
-      if (ok) toastOk("Password reset email sent.");
+      if (ok) toastSuccess("Password reset email sent.");
       router.refresh();
     } finally {
       setLoadingAction(null);
@@ -524,7 +539,6 @@ export function UsersRolesClient({
     const key = `delete-staff-exec-${userId}`;
     setLoadingAction(key);
     setErr(null);
-    setConfirmingAction(null);
     try {
       const res = await fetch(`/api/admin/users/${userId}?type=staff`, {
         method: "DELETE",
@@ -534,7 +548,7 @@ export function UsersRolesClient({
         setErr(json.error ?? "Delete failed");
         return;
       }
-      toastOk("Staff account removed.");
+      toastNeutral("Staff account removed.");
       router.refresh();
     } finally {
       setLoadingAction(null);
@@ -546,7 +560,7 @@ export function UsersRolesClient({
     setLoadingAction(key);
     try {
       const ok = await patchUser(id, { action: "verify_email" });
-      if (ok) toastOk("Email verified successfully.");
+      if (ok) toastSuccess("Email verified successfully.");
       router.refresh();
     } finally {
       setLoadingAction(null);
@@ -561,7 +575,7 @@ export function UsersRolesClient({
         action: "force_password_reset",
         email,
       });
-      if (ok) toastOk("Password reset email sent.");
+      if (ok) toastSuccess("Password reset email sent.");
       router.refresh();
     } finally {
       setLoadingAction(null);
@@ -573,7 +587,7 @@ export function UsersRolesClient({
     setLoadingAction(key);
     try {
       const ok = await patchUser(id, { action: "unsuspend_customer" });
-      if (ok) toastOk("Customer unsuspended.");
+      if (ok) toastSuccess("Customer unsuspended.");
       router.refresh();
     } finally {
       setLoadingAction(null);
@@ -591,9 +605,7 @@ export function UsersRolesClient({
         setErr(json.error ?? "Delete failed");
         return;
       }
-      setCustomerDelete(null);
-      setCustomerDeleteTyping("");
-      toastOk("Account deleted.");
+      toastNeutral("Account deleted.");
       router.refresh();
     } finally {
       setLoadingAction(null);
@@ -628,205 +640,26 @@ export function UsersRolesClient({
       const ok = await patchUser(customerId, { action: "update_note", note: noteDraft });
       if (!ok) return;
       setNoteEditId(null);
-      toastOk("Internal note saved.");
+      toastSuccess("Internal note saved.");
       router.refresh();
     } finally {
       setLoadingAction(null);
     }
   }
 
-  function confirmingStrip(opts: {
-    scopeId: string;
-    action: string;
-    colSpan: number;
-    destructive: boolean;
-    loadingKeyWhenRunning: string;
-    onConfirmed: () => void | Promise<void>;
-    secondaryLine?: string;
-    confirmLabel?: string;
-  }): ReactElement | null {
-    const { scopeId, action, colSpan, destructive, loadingKeyWhenRunning, onConfirmed, secondaryLine, confirmLabel } =
-      opts;
-    if (!confirmingAction || confirmingAction.userId !== scopeId || confirmingAction.action !== action) {
-      return null;
-    }
-    const busy = loadingAction === loadingKeyWhenRunning;
-    const subtitle =
-      secondaryLine ??
-      (destructive ? "Are you sure? This cannot be undone." : undefined);
-    const cta = confirmLabel ?? (destructive ? "Confirm" : "Continue");
-    return (
-      <Table.Row>
-        <Table.Cell colSpan={colSpan} className="border-t border-[#E8A020]/30 bg-[#FFF8F0] p-3">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-            <div>
-              <p className="font-sans text-[13px] text-[#333]">{confirmingAction.label}</p>
-              {subtitle ? (
-                <p className="mt-1 font-sans text-[12px] text-[#666]">{subtitle}</p>
-              ) : null}
-            </div>
-            <div className="flex shrink-0 flex-wrap gap-2">
-              <button
-                type="button"
-                className={btnDefault}
-                onClick={() => setConfirmingAction(null)}
-                disabled={busy}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className={destructive ? btnDanger : btnAmber}
-                disabled={busy}
-                onClick={() => void onConfirmed()}
-              >
-                {busy ? "…" : cta}
-              </button>
-            </div>
-          </div>
-        </Table.Cell>
-      </Table.Row>
-    );
-  }
-
-  function customerDeleteStrip(c: CustomerDashboardRow): ReactElement | null {
-    if (!customerDelete || customerDelete.id !== c.id) return null;
-    if (customerDelete.step === 1) {
-      return (
-        <Table.Row>
-          <Table.Cell colSpan={6} className="border-t border-[#E8A020]/30 bg-[#FFF8F0] p-3">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-              <div>
-                <p className="font-sans text-[13px] text-[#333]">
-                  Delete account for <span className="font-medium">{customerDelete.email}</span>?
-                </p>
-                <p className="mt-1 font-sans text-[12px] text-[#666]">
-                  Are you sure? This removes login access and deletes their order rows in the dashboard.
-                </p>
-              </div>
-              <div className="flex shrink-0 gap-2">
-                <button
-                  type="button"
-                  className={btnDefault}
-                  onClick={() => {
-                    setCustomerDelete(null);
-                    setCustomerDeleteTyping("");
-                  }}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  className={btnDanger}
-                  onClick={() => {
-                    setCustomerDelete({ ...customerDelete, step: 2 });
-                    setCustomerDeleteTyping("");
-                  }}
-                >
-                  Continue
-                </button>
-              </div>
-            </div>
-          </Table.Cell>
-        </Table.Row>
-      );
-    }
-    const execBusyKey = `delete-customer-${c.id}`;
-    const busy = loadingAction === execBusyKey;
-    const canExec = customerDeleteTyping === "DELETE";
-    return (
-      <Table.Row>
-        <Table.Cell colSpan={6} className="border-t border-[#E8A020]/30 bg-[#FFF8F0] p-3">
-          <div className="space-y-3">
-            <p className="font-sans text-[13px] text-[#333]">Type DELETE to permanently remove this account.</p>
-            <Input
-              label=""
-              placeholder="DELETE"
-              value={customerDeleteTyping}
-              onChange={(e) => setCustomerDeleteTyping(e.target.value)}
-            />
-            <div className="flex shrink-0 gap-2">
-              <button
-                type="button"
-                className={btnDefault}
-                disabled={busy}
-                onClick={() => {
-                  setCustomerDelete(null);
-                  setCustomerDeleteTyping("");
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className={btnDanger}
-                disabled={!canExec || busy}
-                onClick={() => void runCustomerDeleteConfirmed(c.id)}
-              >
-                {busy ? "…" : "Confirm delete"}
-              </button>
-            </div>
-          </div>
-        </Table.Cell>
-      </Table.Row>
-    );
-  }
-
   return (
     <div className="space-y-6">
       {err ? <Toast variant="error" message={err} onDismiss={() => setErr(null)} /> : null}
-      {successMsg ? (
-        <Toast variant="success" message={successMsg} onDismiss={() => setSuccessMsg(null)} />
+      {toastFeedback ? (
+        <Toast
+          variant={toastFeedback.variant}
+          message={toastFeedback.message}
+          duration={3000}
+          onDismiss={() => setToastFeedback(null)}
+        />
       ) : null}
 
       <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
-
-      {suspendModal ? (
-        <Modal
-          isOpen
-          onClose={() => {
-            setSuspendModal(null);
-            setSuspendReason("");
-          }}
-          title={suspendModal.kind === "staff" ? "Suspend staff member" : "Suspend customer"}
-        >
-          <p className="font-sans text-sm text-[#555]">
-            {suspendModal.kind === "staff"
-              ? `Suspend ${suspendModal.email}? They will be blocked from signing in.`
-              : `Suspend customer ${suspendModal.email}?`}
-          </p>
-          <label className="mt-4 block font-sans text-[11px] font-medium uppercase tracking-wide text-[#888]">
-            Reason (optional)
-            <textarea
-              value={suspendReason}
-              onChange={(e) => setSuspendReason(e.target.value)}
-              rows={3}
-              className="mt-1 w-full rounded-lg border border-[#D0D0CA] px-3 py-2 font-sans text-sm focus:border-[var(--color-gold)] focus:outline-none focus:ring-2 focus:ring-[var(--color-gold)]"
-            />
-          </label>
-          <div className="mt-6 flex justify-end gap-2">
-            <button
-              type="button"
-              className={btnDefault}
-              onClick={() => {
-                setSuspendModal(null);
-                setSuspendReason("");
-              }}
-              disabled={loadingAction === "suspend-submit"}
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              className={btnDanger}
-              disabled={loadingAction === "suspend-submit"}
-              onClick={() => void submitSuspendModal()}
-            >
-              {loadingAction === "suspend-submit" ? "…" : "Confirm suspend"}
-            </button>
-          </div>
-        </Modal>
-      ) : null}
 
       {activeTab === "staff" ? (
         <div role="tabpanel" id="panel-staff" aria-labelledby="tab-staff" className="pt-6 space-y-6">
@@ -889,54 +722,62 @@ export function UsersRolesClient({
                   </Table.Head>
                   <Table.Body>
                     {pending.map((inv) => (
-                      <Fragment key={inv.id}>
-                        <Table.Row>
-                          <Table.Cell className="font-mono text-[12px] text-[#1a1a2e]">
-                            {inv.email}
-                          </Table.Cell>
-                          <Table.Cell className="font-sans text-sm text-[#555]">{formatJoined(inv.invited_at)}</Table.Cell>
-                          <Table.Cell className="font-sans text-sm text-[#555]">
-                            {inv.role_name ?? "—"}
-                          </Table.Cell>
-                          <Table.Cell>
-                            {isSuperAdminViewer ? (
-                              <div className="flex flex-wrap gap-2">
-                                <button
-                                  type="button"
-                                  className={btnDefault}
-                                  disabled={loadingAction === `resend-${inv.id}`}
-                                  onClick={() => void runResendPending(inv, inv.role_name?.split(",")[0]?.trim())}
-                                >
-                                  {loadingAction === `resend-${inv.id}` ? "…" : "Resend"}
-                                </button>
-                                <button
-                                  type="button"
-                                  className={btnDanger}
-                                  disabled={loadingAction === `revoke-${inv.id}`}
-                                  onClick={() =>
-                                    setConfirmingAction({
-                                      userId: inv.id,
-                                      action: "revoke-invite",
-                                      label: `Revoke invitation for ${inv.email}?`,
-                                    })
-                                  }
-                                >
-                                  Revoke
-                                </button>
-                              </div>
-                            ) : null}
-                          </Table.Cell>
-                        </Table.Row>
-                        {confirmingStrip({
-                          scopeId: inv.id,
-                          action: "revoke-invite",
-                          colSpan: 4,
-                          destructive: true,
-                          loadingKeyWhenRunning: `revoke-${inv.id}`,
-                          confirmLabel: "Confirm",
-                          onConfirmed: () => void runRevokeInvite(inv),
-                        })}
-                      </Fragment>
+                      <Table.Row key={inv.id}>
+                        <Table.Cell className="font-mono text-[12px] text-[#1a1a2e]">
+                          {inv.email}
+                        </Table.Cell>
+                        <Table.Cell className="font-sans text-sm text-[#555]">{formatJoined(inv.invited_at)}</Table.Cell>
+                        <Table.Cell className="font-sans text-sm text-[#555]">
+                          {inv.role_name ?? "—"}
+                        </Table.Cell>
+                        <Table.Cell>
+                          {isSuperAdminViewer ? (
+                            <div className="flex flex-wrap gap-2">
+                              <button
+                                type="button"
+                                className={btnDefault}
+                                disabled={loadingAction === `resend-${inv.id}`}
+                                onClick={() =>
+                                  void (async () => {
+                                    const ok = await showConfirm({
+                                      title: "Resend invitation",
+                                      message: `This will send a new invite email to ${inv.email}. The previous link will be invalidated.`,
+                                      confirmLabel: "Resend",
+                                      confirmVariant: "navy",
+                                      icon: "info",
+                                    });
+                                    if (ok)
+                                      void runResendPending(inv, inv.role_name?.split(",")[0]?.trim());
+                                  })()
+                                }
+                              >
+                                {loadingAction === `resend-${inv.id}` ? "…" : "Resend"}
+                              </button>
+                              <button
+                                type="button"
+                                className={btnDanger}
+                                disabled={loadingAction === `revoke-${inv.id}`}
+                                onClick={() =>
+                                  void (async () => {
+                                    const ok = await showConfirm({
+                                      title: "Revoke invitation",
+                                      message:
+                                        "This will invalidate the invite link. The person will need to be re-invited to access the dashboard.",
+                                      confirmLabel: "Revoke invitation",
+                                      cancelLabel: "Cancel",
+                                      confirmVariant: "danger",
+                                      icon: "warning",
+                                    });
+                                    if (ok) void runRevokeInvite(inv);
+                                  })()
+                                }
+                              >
+                                Revoke
+                              </button>
+                            </div>
+                          ) : null}
+                        </Table.Cell>
+                      </Table.Row>
                     ))}
                   </Table.Body>
                 </Table>
@@ -993,7 +834,19 @@ export function UsersRolesClient({
                                 type="button"
                                 className={btnTeal}
                                 disabled={loadingAction === `unsuspend-staff-${u.id}`}
-                                onClick={() => void runStaffUnsuspend(u.id)}
+                                onClick={() =>
+                                  void (async () => {
+                                    const ok = await showConfirm({
+                                      title: `Unsuspend ${u.email}`,
+                                      message:
+                                        "This will restore their access to the admin dashboard immediately.",
+                                      confirmLabel: "Restore access",
+                                      confirmVariant: "teal",
+                                      icon: "success",
+                                    });
+                                    if (ok) void runStaffUnsuspend(u.id);
+                                  })()
+                                }
                               >
                                 {loadingAction === `unsuspend-staff-${u.id}` ? "…" : "Unsuspend"}
                               </button>
@@ -1001,7 +854,8 @@ export function UsersRolesClient({
                               <button
                                 type="button"
                                 className={btnDanger}
-                                onClick={() => setSuspendModal({ kind: "staff", id: u.id, email: u.email })}
+                                disabled={loadingAction === `suspend-${u.id}`}
+                                onClick={() => void suspendStaffFromDialog(u.email, u.id)}
                               >
                                 Suspend
                               </button>
@@ -1011,11 +865,16 @@ export function UsersRolesClient({
                               className={btnDefault}
                               disabled={loadingAction === `reset-staff-${u.id}`}
                               onClick={() =>
-                                setConfirmingAction({
-                                  userId: u.id,
-                                  action: "reset-staff-password",
-                                  label: `Send a password reset email to ${u.email}?`,
-                                })
+                                void (async () => {
+                                  const ok = await showConfirm({
+                                    title: "Force password reset",
+                                    message: `A password reset email will be sent to ${u.email}. They will need to set a new password before signing in.`,
+                                    confirmLabel: "Send reset email",
+                                    confirmVariant: "navy",
+                                    icon: "info",
+                                  });
+                                  if (ok) void runStaffPasswordReset(u.id, u.email);
+                                })()
                               }
                             >
                               {loadingAction === `reset-staff-${u.id}` ? "…" : "Reset password"}
@@ -1025,11 +884,17 @@ export function UsersRolesClient({
                                 type="button"
                                 className={btnDanger}
                                 onClick={() =>
-                                  setConfirmingAction({
-                                    userId: u.id,
-                                    action: "delete-staff",
-                                    label: `Delete ${u.email} from staff?`,
-                                  })
+                                  void (async () => {
+                                    const ok = await showConfirm({
+                                      title: "Delete staff account",
+                                      message: `This will permanently delete ${u.email}'s account. They will lose all access immediately.`,
+                                      confirmLabel: "Delete account",
+                                      cancelLabel: "Keep account",
+                                      confirmVariant: "danger",
+                                      icon: "danger",
+                                    });
+                                    if (ok) void runStaffDeleteAccount(u.id);
+                                  })()
                                 }
                               >
                                 Delete
@@ -1039,24 +904,6 @@ export function UsersRolesClient({
                         ) : null}
                       </Table.Cell>
                     </Table.Row>
-                    {confirmingStrip({
-                      scopeId: u.id,
-                      action: "delete-staff",
-                      colSpan: 4,
-                      destructive: true,
-                      loadingKeyWhenRunning: `delete-staff-exec-${u.id}`,
-                      onConfirmed: () => void runStaffDeleteAccount(u.id),
-                    })}
-                    {confirmingStrip({
-                      scopeId: u.id,
-                      action: "reset-staff-password",
-                      colSpan: 4,
-                      destructive: false,
-                      loadingKeyWhenRunning: `reset-staff-${u.id}`,
-                      secondaryLine: "This sends a secure recovery link by email.",
-                      confirmLabel: "Send email",
-                      onConfirmed: () => void runStaffPasswordReset(u.id, u.email),
-                    })}
                     {openUserId === u.id && isSuperAdminViewer ? (
                       <Table.Row key={`${u.id}-panel`}>
                         <Table.Cell colSpan={4} className="bg-[#F5F0E8] p-5">
@@ -1131,8 +978,7 @@ export function UsersRolesClient({
                 {rolesForTable.map((r) => {
                   const lockedSuper = isSuperAdminRole(r);
                   return (
-                    <Fragment key={r.id}>
-                    <Table.Row>
+                    <Table.Row key={r.id}>
                       <Table.Cell className="font-sans text-sm font-medium text-[#1a1a2e]">
                         <span className="inline-flex items-center gap-2">
                           {lockedSuper && isSuperAdminViewer ? <IconLock className="text-[#888]" /> : null}
@@ -1167,11 +1013,16 @@ export function UsersRolesClient({
                               type="button"
                               className={btnDanger}
                               onClick={() =>
-                                setConfirmingAction({
-                                  userId: r.id,
-                                  action: "delete-role",
-                                  label: `Delete role "${r.name}"? Users with this role will lose these permissions.`,
-                                })
+                                void (async () => {
+                                  const ok = await showConfirm({
+                                    title: "Delete role",
+                                    message: `Deleting "${r.name}" will remove it from all assigned users. They will lose those permissions immediately.`,
+                                    confirmLabel: "Delete role",
+                                    confirmVariant: "danger",
+                                    icon: "warning",
+                                  });
+                                  if (ok) void runDeleteRole(r);
+                                })()
                               }
                             >
                               Delete
@@ -1184,15 +1035,6 @@ export function UsersRolesClient({
                         )}
                       </Table.Cell>
                     </Table.Row>
-                    {confirmingStrip({
-                      scopeId: r.id,
-                      action: "delete-role",
-                      colSpan: 4,
-                      destructive: true,
-                      loadingKeyWhenRunning: `delete-role-exec-${r.id}`,
-                      onConfirmed: () => void runDeleteRole(r),
-                    })}
-                  </Fragment>
                   );
                 })}
               </Table.Body>
@@ -1404,7 +1246,18 @@ export function UsersRolesClient({
                                   type="button"
                                   className={btnDefault}
                                   disabled={loadingAction === `reset-customer-${c.id}`}
-                                  onClick={() => void runCustomerPasswordReset(c.id, c.email)}
+                                  onClick={() =>
+                                    void (async () => {
+                                      const ok = await showConfirm({
+                                        title: "Force password reset",
+                                        message: `A password reset email will be sent to ${c.email}. They will need to set a new password before signing in.`,
+                                        confirmLabel: "Send reset email",
+                                        confirmVariant: "navy",
+                                        icon: "info",
+                                      });
+                                      if (ok) void runCustomerPasswordReset(c.id, c.email);
+                                    })()
+                                  }
                                 >
                                   {loadingAction === `reset-customer-${c.id}` ? "…" : "Reset password"}
                                 </button>
@@ -1414,7 +1267,19 @@ export function UsersRolesClient({
                                       type="button"
                                       className={btnTeal}
                                       disabled={loadingAction === `unsuspend-customer-${c.id}`}
-                                      onClick={() => void runCustomerUnsuspend(c.id)}
+                                      onClick={() =>
+                                        void (async () => {
+                                          const ok = await showConfirm({
+                                            title: `Unsuspend ${c.email}`,
+                                            message:
+                                              "This will restore their access to shop and orders immediately.",
+                                            confirmLabel: "Restore access",
+                                            confirmVariant: "teal",
+                                            icon: "success",
+                                          });
+                                          if (ok) void runCustomerUnsuspend(c.id);
+                                        })()
+                                      }
                                     >
                                       {loadingAction === `unsuspend-customer-${c.id}` ? "…" : "Unsuspend"}
                                     </button>
@@ -1428,9 +1293,8 @@ export function UsersRolesClient({
                                   <button
                                     type="button"
                                     className={btnDanger}
-                                    onClick={() =>
-                                      setSuspendModal({ kind: "customer", id: c.id, email: c.email })
-                                    }
+                                    disabled={loadingAction === `suspend-customer-${c.id}`}
+                                    onClick={() => void suspendCustomerFromDialog(c.email, c.id)}
                                   >
                                     Suspend
                                   </button>
@@ -1448,10 +1312,21 @@ export function UsersRolesClient({
                                 <button
                                   type="button"
                                   className={btnDanger}
-                                  onClick={() => {
-                                    setCustomerDelete({ id: c.id, email: c.email, step: 1 });
-                                    setCustomerDeleteTyping("");
-                                  }}
+                                  onClick={() =>
+                                    void (async () => {
+                                      const typed = await showPrompt({
+                                        title: "Delete customer account",
+                                        message: `This permanently deletes ${c.email}'s account and all associated data. Type DELETE to confirm.`,
+                                        promptPlaceholder: "Type DELETE",
+                                        promptMatch: "DELETE",
+                                        confirmLabel: "Permanently delete",
+                                        confirmVariant: "danger",
+                                        icon: "danger",
+                                      });
+                                      if (typed === null) return;
+                                      void runCustomerDeleteConfirmed(c.id);
+                                    })()
+                                  }
                                 >
                                   Delete account
                                 </button>
@@ -1487,7 +1362,6 @@ export function UsersRolesClient({
                             </Table.Cell>
                           </Table.Row>
                         ) : null}
-                        {customerDeleteStrip(c)}
                       </Fragment>
                     );
                   })}
