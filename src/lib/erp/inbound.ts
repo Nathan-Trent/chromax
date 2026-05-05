@@ -2,6 +2,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { logStockLowThresholdAlert } from "@/lib/erp/client";
 import { ERP_EVENTS } from "@/lib/erp/events";
+import { notifySuperAdmins } from "@/lib/notifications/notify";
+import { NOTIFICATION_TYPES } from "@/lib/notifications/rules";
 
 function asRecord(v: unknown): Record<string, unknown> | null {
   if (v && typeof v === "object" && !Array.isArray(v)) {
@@ -152,6 +154,7 @@ export async function applyErpInboundEvent(
         const cur = str(data, "currency") ?? "NGN";
         const currency: "NGN" | "USD" | "GBP" =
           cur === "USD" || cur === "GBP" ? cur : "NGN";
+        const totalVal = num(data, "total") ?? 0;
 
         await service.from("orders").insert({
           reference,
@@ -162,7 +165,7 @@ export async function applyErpInboundEvent(
           items: Array.isArray(items) ? items : [],
           subtotal: num(data, "subtotal") ?? num(data, "total") ?? 0,
           shipping_cost: num(data, "shipping_cost") ?? 0,
-          total: num(data, "total") ?? 0,
+          total: totalVal,
           currency: currency as "NGN" | "USD" | "GBP",
           status: orderStatus as "new" | "confirmed" | "packed" | "dispatched" | "delivered" | "cancelled",
           payment_status: payStatus as "pending" | "paid" | "refunded" | "failed",
@@ -171,6 +174,12 @@ export async function applyErpInboundEvent(
           source: "erp",
           erp_order_id: erpOid,
           notes: str(data, "notes"),
+        });
+
+        void notifySuperAdmins({
+          type: NOTIFICATION_TYPES.ORDER_NEW,
+          title: "New order from ERP",
+          message: `Order ${reference} created in ERP — ${totalVal} ${currency}`,
         });
         break;
       }

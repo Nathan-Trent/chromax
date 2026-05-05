@@ -1,4 +1,4 @@
-import { sendApprovalActioned } from "@/lib/email";
+import { sendApprovalActioned, sendB2BOfferResponse } from "@/lib/email";
 import { writeAuditLog } from "@/lib/audit/write-audit-log";
 import { getAdminRequestContext, roleNamesCsv } from "@/lib/auth/admin-api";
 import { canApprovePendingChange } from "@/lib/auth/can-approve-pending";
@@ -138,6 +138,41 @@ export async function POST(
     }
   } catch {
     /* non-blocking */
+  }
+
+  if (row.action_type === "b2b.counter_sent" && row.record_id) {
+    try {
+      const { data: offer } = await ctx.supabase
+        .from("b2b_offers")
+        .select("reference, buyer_name, buyer_email, product_name, currency")
+        .eq("id", row.record_id)
+        .maybeSingle();
+      if (offer) {
+        const after = row.after_values as Record<string, unknown> | null;
+        const counterPrice =
+          after?.counter_price !== undefined && after?.counter_price !== null
+            ? Number(after.counter_price)
+            : NaN;
+        const msg = after?.message;
+        const message = typeof msg === "string" ? msg : undefined;
+        if (Number.isFinite(counterPrice)) {
+          void sendB2BOfferResponse(
+            {
+              reference: offer.reference,
+              buyer_name: offer.buyer_name,
+              buyer_email: offer.buyer_email,
+              product_name: offer.product_name,
+              currency: offer.currency,
+            },
+            "countered",
+            counterPrice,
+            message ?? undefined,
+          );
+        }
+      }
+    } catch {
+      /* non-blocking */
+    }
   }
 
   return NextResponse.json({ data: { approved: true as const } });

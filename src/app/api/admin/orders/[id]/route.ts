@@ -9,6 +9,14 @@ import { adminOrderStatusPatchSchema } from "@/lib/schemas/admin-orders";
 import type { OrderStatus } from "@/types/order";
 import { NextResponse } from "next/server";
 
+const CUSTOMER_NOTIFY_STATUSES = [
+  "confirmed",
+  "packed",
+  "dispatched",
+  "delivered",
+  "cancelled",
+] as const;
+
 export async function GET(
   _request: Request,
   context: { params: Promise<{ id: string }> },
@@ -173,14 +181,19 @@ export async function PATCH(
     ctx.user.email,
   );
 
-  if (prevStatus !== newStatus) {
+  if (
+    CUSTOMER_NOTIFY_STATUSES.includes(
+      newStatus as (typeof CUSTOMER_NOTIFY_STATUSES)[number],
+    ) &&
+    prevStatus !== newStatus
+  ) {
     void sendOrderStatusUpdate({
       reference: order.reference,
       customer_name: order.customer_name,
       customer_email: order.customer_email,
       status: newStatus,
-      tracking_number: order.tracking_number as string | null | undefined,
-      courier: order.courier as string | null | undefined,
+      tracking_number: order.tracking_number ?? undefined,
+      courier: order.courier ?? undefined,
     });
   }
 

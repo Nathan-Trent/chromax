@@ -188,6 +188,15 @@ export async function sendApprovalActioned(
   }
 }
 
+/**
+ * sendStaffInvite — intentionally not called from the invite API route.
+ *
+ * Supabase Auth sends the invite email with the signed token URL via our branded
+ * template configured in Supabase Dashboard → Auth → Email Templates → Invite user.
+ *
+ * A custom email cannot carry the signed token — only Supabase Auth can generate it.
+ * This function is kept for potential future use such as invite reminder emails.
+ */
 export async function sendStaffInvite(options: {
   toEmail: string;
   inviterName: string;

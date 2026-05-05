@@ -2,9 +2,13 @@ import { writeAuditLog } from "@/lib/audit/write-audit-log";
 import { voidNotifyApprovalEmailsForWorkflow } from "@/lib/approvals/notify-approvers";
 import { getAdminRequestContext, roleNamesCsv } from "@/lib/auth/admin-api";
 import { hasPermission } from "@/lib/auth/permissions";
+import { sendApprovalActioned, sendOrderStatusUpdate } from "@/lib/email";
 import { ERP_EVENTS } from "@/lib/erp/events";
 import { queueERPEvent } from "@/lib/erp/queue";
+import { notifySuperAdmins } from "@/lib/notifications/notify";
+import { NOTIFICATION_TYPES } from "@/lib/notifications/rules";
 import { orderCancellationSchema } from "@/lib/schemas/admin-orders";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
 
 export async function POST(
@@ -106,6 +110,17 @@ export async function POST(
       });
     }
 
+    void notifySuperAdmins({
+      type: NOTIFICATION_TYPES.APPROVAL_PENDING,
+      title: "Order cancellation requested",
+      message: `${ctx.user.email} requested cancellation of order ${order.reference}. Review in Admin → Orders.`,
+      data: {
+        order_id: orderId,
+        reference: order.reference,
+        pending_change_id: pendingRow?.id,
+      },
+    });
+
     await writeAuditLog(ctx.supabase, {
       userId: ctx.user.id,
       userEmail: ctx.user.email,
@@ -117,11 +132,6 @@ export async function POST(
       afterValues: { pending_change_id: pendingRow?.id },
       source: "dashboard",
       pendingChangeId: pendingRow?.id ?? null,
-    });
-
-    console.log("[order-email stub] notify accountant — cancellation requested", {
-      order: order.reference,
-      requestedBy: ctx.user.email,
     });
 
     return NextResponse.json({ data: { pending: true, change_id: pendingRow?.id } });
@@ -174,6 +184,28 @@ export async function POST(
     })
     .eq("id", pending.id);
 
+  try {
+    const service = createServiceRoleClient();
+    const { data: submitterAuth } = await service.auth.admin.getUserById(pending.submitted_by as string);
+    const submitterEmail = submitterAuth?.user?.email ?? "";
+    const meta = submitterAuth?.user?.user_metadata as Record<string, unknown> | undefined;
+    const submitterName =
+      typeof meta?.full_name === "string" && meta.full_name
+        ? meta.full_name
+        : submitterEmail.split("@")[0] ?? "User";
+    if (submitterEmail) {
+      void sendApprovalActioned(
+        pending.record_label ?? order.reference,
+        "Order cancellation",
+        submitterEmail,
+        submitterName,
+        "approved",
+      );
+    }
+  } catch {
+    /* non-blocking */
+  }
+
   await writeAuditLog(ctx.supabase, {
     userId: ctx.user.id,
     userEmail: ctx.user.email,
@@ -200,9 +232,12 @@ export async function POST(
     ctx.user.email,
   );
 
-  console.log("[order-email stub] order cancelled", {
-    to: order.customer_email,
-    reference: order.reference,
+  const cancelled = updatedOrder ?? order;
+  void sendOrderStatusUpdate({
+    reference: cancelled.reference,
+    customer_name: cancelled.customer_name,
+    customer_email: cancelled.customer_email,
+    status: "cancelled",
   });
 
   return NextResponse.json({ data: { order: updatedOrder } });

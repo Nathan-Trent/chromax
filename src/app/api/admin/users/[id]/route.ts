@@ -126,7 +126,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
             { status: 400 },
           );
         }
-        await sendEmail({
+        void sendEmail({
           to: email,
           template: "password_reset",
           data: { resetUrl: gen.properties.action_link },

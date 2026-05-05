@@ -129,7 +129,13 @@ export async function POST(request: Request) {
           message: `${offer.buyer_company ?? offer.buyer_name} offered ${offer.offered_price} ${offer.currency} for ${offer.quantity}× ${offer.product_name}`,
         });
 
-        if (adminEmail) {
+        if (!adminEmail) {
+          void notifySuperAdmins({
+            type: NOTIFICATION_TYPES.B2B_OFFER_NEW,
+            title: "⚠️ New B2B offer — configure team email",
+            message: `${offer.buyer_company ?? offer.buyer_name} submitted a B2B offer but no contact email is configured. Go to Admin → Settings → General to add a contact email.`,
+          });
+        } else {
           void sendB2BOfferReceived(offer, adminEmail);
         }
 

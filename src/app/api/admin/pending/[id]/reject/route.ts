@@ -115,5 +115,9 @@ export async function POST(
     /* non-blocking */
   }
 
+  // B2B counter rejected — buyer is NOT notified (counter was killed internally;
+  // offer remains in previous state from buyer's perspective). Staff submitter
+  // is notified via sendApprovalActioned above.
+
   return NextResponse.json({ data: { rejected: true as const } });
 }
