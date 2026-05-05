@@ -269,9 +269,11 @@ export function AdminShell({ user, roles, children }: AdminShellProps) {
   }
 
   const systemItems: NavItem[] = [];
+  if (hasPermission(roles, "users", "view") || isSuperAdmin(roles)) {
+    systemItems.push({ href: "/admin/users", label: "Users & Roles", icon: <IconUsers /> });
+  }
   if (isSuperAdmin(roles)) {
     systemItems.push(
-      { href: "/admin/users", label: "Users & Roles", icon: <IconUsers /> },
       { href: "/admin/workflows", label: "Approval Workflows", icon: <IconWorkflows /> },
       { href: "/admin/settings", label: "Settings", icon: <IconSettings /> },
     );

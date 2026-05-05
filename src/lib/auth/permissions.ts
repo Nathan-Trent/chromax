@@ -20,6 +20,11 @@ export function isSuperAdmin(roles: Role[]): boolean {
   );
 }
 
+/** True if these assigned roles include the Super Admin system role (target user visibility). */
+export function hasAssignedSuperAdminRole(roles: Role[]): boolean {
+  return roles.some((r) => r.is_system === true && r.name === "Super Admin");
+}
+
 const CONTENT_NAV_CHECKS: { section: string; actions: string[] }[] = [
   {
     section: "products",

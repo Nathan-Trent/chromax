@@ -17,12 +17,14 @@ type PageSearch = {
   status?: string;
   currency?: string;
   search?: string;
+  customer?: string;
   page?: string;
 };
 
 function parseListParams(sp: PageSearch): Parameters<typeof getAdminOrders>[0] {
   const page = Math.max(1, Number.parseInt(sp.page ?? "1", 10) || 1);
   const search = sp.search?.trim() || undefined;
+  const customerEmail = sp.customer?.trim() || undefined;
   const status =
     sp.status === "new" ||
     sp.status === "confirmed" ||
@@ -37,7 +39,7 @@ function parseListParams(sp: PageSearch): Parameters<typeof getAdminOrders>[0] {
       ? (sp.currency as OrderCurrency)
       : "all";
 
-  return { status, currency, search, page, limit: PAGE_SIZE };
+  return { status, currency, search, customerEmail, page, limit: PAGE_SIZE };
 }
 
 function formatMoney(amount: number, currency: string): string {
@@ -90,6 +92,7 @@ function hrefForPage(sp: PageSearch, p: number) {
   if (sp.status && sp.status !== "all") params.set("status", sp.status);
   if (sp.currency && sp.currency !== "all") params.set("currency", sp.currency);
   if (sp.search?.trim()) params.set("search", sp.search.trim());
+  if (sp.customer?.trim()) params.set("customer", sp.customer.trim());
   if (p > 1) params.set("page", String(p));
   const qs = params.toString();
   return qs ? `/admin/orders?${qs}` : "/admin/orders";

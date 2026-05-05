@@ -41,6 +41,8 @@ export type AdminOrderListFilter = {
   status?: OrderStatus | "all";
   currency?: OrderCurrency | "all";
   search?: string;
+  /** Exact match on orders.customer_email (from ?customer=) */
+  customerEmail?: string;
   page?: number;
   limit?: number;
 };
@@ -69,6 +71,10 @@ export async function getAdminOrders(
     query = query.or(
       `reference.ilike.${p},customer_name.ilike.${p},customer_email.ilike.${p}`,
     );
+  }
+
+  if (filters.customerEmail?.trim()) {
+    query = query.eq("customer_email", filters.customerEmail.trim());
   }
 
   query = query.order("created_at", { ascending: false }).range(offset, offset + limit - 1);

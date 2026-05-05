@@ -7,6 +7,29 @@ export type UserWithRoles = {
   roles: Role[];
 };
 
+export type StaffMemberRow = UserWithRoles & {
+  banned_until?: string | null;
+};
+
+export type PendingInviteRow = {
+  id: string;
+  email: string;
+  invited_at: string;
+  role_name?: string;
+};
+
+export type CustomerDashboardRow = {
+  id: string;
+  email: string;
+  full_name: string | null;
+  created_at: string;
+  confirmed_at: string | null;
+  suspended_at: string | null;
+  suspension_reason: string | null;
+  internal_notes: string | null;
+  order_count: number;
+};
+
 export type ApprovalWorkflowRow = {
   id: string;
   action_type: string;

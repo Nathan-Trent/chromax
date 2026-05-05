@@ -42,7 +42,29 @@ export async function POST(
     .maybeSingle();
 
   const superAdminId = superRow?.id as string | undefined;
-  if (targetUserId === ctx.user.id && superAdminId && !roleIds.includes(superAdminId)) {
+
+  if (
+    superAdminId &&
+    roleIds.includes(superAdminId) &&
+    targetUserId !== ctx.user.id
+  ) {
+    return NextResponse.json(
+      { error: "Super Admin cannot be assigned via the dashboard." },
+      { status: 422 },
+    );
+  }
+
+  const effectiveRoleIds = [...roleIds];
+  if (
+    superAdminId &&
+    targetUserId === ctx.user.id &&
+    isSuperAdmin(ctx.roles) &&
+    !effectiveRoleIds.includes(superAdminId)
+  ) {
+    effectiveRoleIds.push(superAdminId);
+  }
+
+  if (targetUserId === ctx.user.id && superAdminId && !effectiveRoleIds.includes(superAdminId)) {
     return NextResponse.json(
       { error: "You cannot remove the Super Admin role from yourself." },
       { status: 422 },
@@ -54,8 +76,8 @@ export async function POST(
     return NextResponse.json({ error: delErr.message }, { status: 500 });
   }
 
-  if (roleIds.length > 0) {
-    const rows = roleIds.map((role_id) => ({
+  if (effectiveRoleIds.length > 0) {
+    const rows = effectiveRoleIds.map((role_id) => ({
       user_id: targetUserId,
       role_id,
       assigned_by: ctx.user.id,
@@ -73,7 +95,7 @@ export async function POST(
     actionType: "users.roles_updated",
     section: "users",
     recordId: targetUserId,
-    afterValues: { role_ids: roleIds },
+    afterValues: { role_ids: effectiveRoleIds },
     source: "dashboard",
   });
 

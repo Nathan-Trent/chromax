@@ -13,6 +13,39 @@ export const adminInviteUserSchema = z
   })
   .strict();
 
+export const adminUserPatchBodySchema = z
+  .object({
+    action: z.enum([
+      "suspend",
+      "unsuspend",
+      "verify_email",
+      "force_password_reset",
+      "suspend_customer",
+      "unsuspend_customer",
+      "update_note",
+    ]),
+    reason: z.string().max(2000).optional(),
+    note: z.string().max(8000).optional(),
+    email: z.string().email().optional(),
+  })
+  .strict()
+  .superRefine((data, ctx) => {
+    if (data.action === "force_password_reset" && !data.email) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "email is required for force_password_reset",
+        path: ["email"],
+      });
+    }
+  });
+
+export const adminUserResendInviteBodySchema = z
+  .object({
+    email: z.string().email(),
+    role_id: z.string().uuid().optional().nullable(),
+  })
+  .strict();
+
 export const adminRoleCreateSchema = z
   .object({
     name: z.string().min(1),

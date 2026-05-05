@@ -1,7 +1,6 @@
 import { getAdminRequestContext } from "@/lib/auth/admin-api";
-import { isSuperAdmin } from "@/lib/auth/permissions";
-import { listAllUsersWithRoles } from "@/lib/supabase/queries/users-admin";
-import type { UserWithRoles } from "@/types/admin-workflows";
+import { hasPermission, isSuperAdmin } from "@/lib/auth/permissions";
+import { fetchAdminUsersDashboard } from "@/lib/supabase/queries/users-dashboard";
 import { NextResponse } from "next/server";
 
 export async function GET() {
@@ -9,13 +8,27 @@ export async function GET() {
   if (!ctx) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  if (!isSuperAdmin(ctx.roles)) {
+
+  const canAccess = isSuperAdmin(ctx.roles) || hasPermission(ctx.roles, "users", "view");
+  if (!canAccess) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
+  const viewerSuperAdmin = isSuperAdmin(ctx.roles);
+
   try {
-    const users: UserWithRoles[] = await listAllUsersWithRoles();
-    return NextResponse.json({ data: { users } });
+    const { activeStaff, pendingInvites, customers } = await fetchAdminUsersDashboard({
+      viewerSuperAdmin,
+    });
+
+    return NextResponse.json({
+      data: {
+        users: activeStaff,
+        pendingInvites,
+        customers,
+        isSuperAdmin: viewerSuperAdmin,
+      },
+    });
   } catch (e) {
     return NextResponse.json(
       { error: e instanceof Error ? e.message : "Failed to list users" },

@@ -1,13 +1,12 @@
 import { writeAuditLog } from "@/lib/audit/write-audit-log";
 import { getAdminRequestContext, roleNamesCsv } from "@/lib/auth/admin-api";
 import { isSuperAdmin } from "@/lib/auth/permissions";
-import { adminInviteUserSchema } from "@/lib/schemas/admin-platform";
-import { notifySuperAdmins } from "@/lib/notifications/notify";
-import { NOTIFICATION_TYPES } from "@/lib/notifications/rules";
+import { adminUserResendInviteBodySchema } from "@/lib/schemas/admin-platform";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
 
-export async function POST(request: Request) {
+export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
+  const { id: staleUserId } = await context.params;
   const ctx = await getAdminRequestContext();
   if (!ctx) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -23,7 +22,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const parsed = adminInviteUserSchema.safeParse(body);
+  const parsed = adminUserResendInviteBodySchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
       { error: "Validation failed", details: parsed.error.flatten().fieldErrors },
@@ -32,16 +31,28 @@ export async function POST(request: Request) {
   }
 
   const { email, role_id: roleId } = parsed.data;
+  const service = createServiceRoleClient();
+
+  const { data: existing, error: loadErr } = await service.auth.admin.getUserById(staleUserId);
+  if (loadErr || !existing.user) {
+    return NextResponse.json({ error: loadErr?.message ?? "User not found" }, { status: 404 });
+  }
+  const existingEmail = existing.user.email ?? "";
+  if (existingEmail.toLowerCase() !== email.trim().toLowerCase()) {
+    return NextResponse.json({ error: "Email does not match invitation record" }, { status: 422 });
+  }
+
+  await service.from("user_roles").delete().eq("user_id", staleUserId);
+
+  const { error: delErr } = await service.auth.admin.deleteUser(staleUserId);
+  if (delErr) {
+    return NextResponse.json({ error: delErr.message }, { status: 400 });
+  }
+
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
   const acceptPath = `${appUrl.replace(/\/$/, "")}/admin/accept-invite`;
 
-  // Supabase sends the invite email with the signed token URL. We use our branded
-  // template configured in Supabase Dashboard → Auth → Email Templates → Invite user.
-  // Do NOT send a custom email here — it would contain a tokenless URL that cannot work.
-
-  const service = createServiceRoleClient();
-
-  const { data: invited, error: invErr } = await service.auth.admin.inviteUserByEmail(email, {
+  const { data: invited, error: invErr } = await service.auth.admin.inviteUserByEmail(email.trim(), {
     redirectTo: acceptPath,
   });
 
@@ -62,30 +73,17 @@ export async function POST(request: Request) {
     }
   }
 
-  let assignedRoleName = "Staff";
-
-  if (roleId) {
-    const { data: roleRow } = await service.from("roles").select("name").eq("id", roleId).maybeSingle();
-    if (roleRow?.name) assignedRoleName = String(roleRow.name);
-  }
-
   await writeAuditLog(ctx.supabase, {
     userId: ctx.user.id,
     userEmail: ctx.user.email,
     userRole: roleNamesCsv(ctx.roles),
-    actionType: "users.invited",
+    actionType: "user.invite_resent",
     section: "users",
     recordId: newUserId,
-    recordLabel: email,
-    afterValues: { role_id: roleId ?? null },
+    recordLabel: email.trim(),
+    afterValues: { role_id: roleId ?? null, previous_auth_user_id: staleUserId },
     source: "dashboard",
   });
 
-  void notifySuperAdmins({
-    type: NOTIFICATION_TYPES.STAFF_INVITED,
-    title: "Staff member invited",
-    message: `Invitation sent to ${email} as ${assignedRoleName}`,
-  });
-
-  return NextResponse.json({ data: { invited: true as const } });
+  return NextResponse.json({ data: { resent: true as const } });
 }
