@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chromax Colour Lab — Prototype</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f4f4f0; min-height: 100vh; display: flex; align-items: flex-start; justify-content: center; padding: 2rem 1rem; }
+  .page { width: 100%; max-width: 860px; }
+
+  .header { margin-bottom: 2rem; }
+  .header-top { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+  .logo-mark { width: 36px; height: 36px; background: #1a1a2e; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #e8a020; font-size: 13px; font-weight: 700; flex-shrink: 0; }
+  .logo-text { font-size: 18px; font-weight: 700; color: #1a1a2e; letter-spacing: 0.5px; }
+  .header-sub { font-size: 13px; color: #888; margin-left: 48px; }
+
+  .card { background: #fff; border-radius: 16px; border: 1px solid #e8e8e4; overflow: hidden; }
+
+  .tabs { display: flex; border-bottom: 1px solid #e8e8e4; }
+  .tab { flex: 1; padding: 14px 10px; font-size: 13px; font-weight: 500; color: #888; cursor: pointer; text-align: center; border-bottom: 2.5px solid transparent; margin-bottom: -1px; transition: all .15s; background: none; border-top: none; border-left: none; border-right: none; }
+  .tab:hover { color: #1a1a2e; background: #fafafa; }
+  .tab.active { color: #1a1a2e; border-bottom-color: #e8a020; }
+
+  .card-body { padding: 1.5rem; }
+
+  .scene-wrap { background: #f7f6f2; border-radius: 12px; padding: 2rem 1.5rem; margin-bottom: 1.25rem; display: flex; justify-content: center; align-items: center; min-height: 240px; }
+  .scene-wrap svg { width: 100%; max-width: 540px; height: auto; display: block; }
+
+  .parts-section { margin-bottom: 1.25rem; }
+  .parts-label { font-size: 10px; font-weight: 600; color: #aaa; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 8px; }
+  .parts-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .part-btn { display: flex; align-items: center; gap: 7px; padding: 7px 14px; border-radius: 24px; border: 1.5px solid #e0e0da; background: #fff; color: #666; font-size: 12px; font-weight: 500; cursor: pointer; transition: all .15s; }
+  .part-btn:hover { border-color: #bbb; color: #333; }
+  .part-btn.active { border-color: #1a1a2e; color: #1a1a2e; background: #f7f6f2; }
+  .part-dot { width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid rgba(0,0,0,0.12); flex-shrink: 0; }
+
+  .swatches-section { margin-bottom: 1.25rem; }
+  .swatches-label { font-size: 10px; font-weight: 600; color: #aaa; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 10px; }
+  .swatches-grid { display: flex; flex-wrap: wrap; gap: 7px; }
+  .swatch { width: 36px; height: 36px; border-radius: 8px; cursor: pointer; border: 2.5px solid transparent; transition: transform .12s, border-color .12s; position: relative; }
+  .swatch:hover { transform: scale(1.14); }
+  .swatch.active { border-color: #1a1a2e; }
+  .swatch.active::after { content: '✓'; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 14px; color: rgba(255,255,255,0.9); text-shadow: 0 1px 2px rgba(0,0,0,0.4); }
+
+  .selected-bar { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #f7f6f2; border-radius: 10px; margin-bottom: 1.25rem; }
+  .selected-preview { width: 34px; height: 34px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.1); flex-shrink: 0; }
+  .selected-info { flex: 1; }
+  .selected-name { font-size: 14px; font-weight: 600; color: #1a1a2e; }
+  .selected-meta { font-size: 11px; color: #888; margin-top: 1px; font-family: monospace; }
+  .add-btn { background: #1a1a2e; color: #fff; border: none; border-radius: 8px; padding: 9px 18px; font-size: 13px; font-weight: 500; cursor: pointer; transition: background .15s; white-space: nowrap; }
+  .add-btn:hover { background: #2d2d4e; }
+
+  .hint { font-size: 11px; color: #bbb; text-align: center; padding-top: 4px; }
+
+  .admin-note { margin-top: 1.5rem; background: #eeedfe; border: 1px solid #afa9ec; border-radius: 10px; padding: 12px 16px; }
+  .admin-note-title { font-size: 11px; font-weight: 700; color: #3c3489; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .admin-note-text { font-size: 12px; color: #534ab7; line-height: 1.6; }
+
+  @media (max-width: 540px) {
+    .tab { font-size: 11px; padding: 12px 6px; }
+    .scene-wrap { padding: 1rem; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <div class="header-top">
+      <div class="logo-mark">CX</div>
+      <div class="logo-text">CHROMAX-MCR</div>
+    </div>
+    <div class="header-sub">Colour Lab — Interactive Visualiser Prototype</div>
+  </div>
+
+  <div class="card">
+    <div class="tabs">
+      <button class="tab active" onclick="switchCategory('auto')">Automotive</button>
+      <button class="tab" onclick="switchCategory('arch')">Architectural</button>
+      <button class="tab" onclick="switchCategory('marine')">Marine</button>
+      <button class="tab" onclick="switchCategory('industrial')">Industrial</button>
+    </div>
+
+    <div class="card-body">
+      <div class="scene-wrap">
+        <svg id="scene-svg" viewBox="0 0 540 220" xmlns="http://www.w3.org/2000/svg"></svg>
+      </div>
+
+      <div class="parts-section">
+        <div class="parts-label">Select a part to paint</div>
+        <div class="parts-row" id="parts-row"></div>
+      </div>
+
+      <div class="selected-bar">
+        <div class="selected-preview" id="sel-preview"></div>
+        <div class="selected-info">
+          <div class="selected-name" id="sel-name">—</div>
+          <div class="selected-meta" id="sel-meta">—</div>
+        </div>
+        <button class="add-btn">Add to cart</button>
+      </div>
+
+      <div class="swatches-section">
+        <div class="swatches-label">Choose a colour</div>
+        <div class="swatches-grid" id="swatches-grid"></div>
+      </div>
+
+      <div class="hint">Select a part above, then click any colour swatch to apply it</div>
+    </div>
+  </div>
+
+  <div class="admin-note">
+    <div class="admin-note-title">ADMIN LAYER NOTE (for build reference)</div>
+    <div class="admin-note-text">Staff can edit: colour name, hex code, product code, add/remove swatches per category. Staff cannot touch: the SVG objects, parts logic, or interaction behaviour. All swatch data is stored as JSON in the CMS and fetched at runtime — no code changes needed to update colours.</div>
+  </div>
+
+</div>
+
+<script>
+const CATS = {
+  auto: {
+    label: 'Automotive paint',
+    parts: ['body','roof','trim','windows'],
+    partLabels: { body:'Body', roof:'Roof', trim:'Trim & bumpers', windows:'Glass tint' },
+    defaults: { body:'#C0392B', roof:'#2C3E50', trim:'#BDC3C7', windows:'#AED6F1' },
+    swatches: [
+      {n:'Chromax Red',h:'#C0392B',c:'CX-AUTO-R01'},
+      {n:'Midnight Blue',h:'#1A3A5C',c:'CX-AUTO-B04'},
+      {n:'Pearl White',h:'#F0F0F0',c:'CX-AUTO-W01'},
+      {n:'Obsidian Black',h:'#1C1C1C',c:'CX-AUTO-K01'},
+      {n:'Champagne Gold',h:'#C9A84C',c:'CX-AUTO-G03'},
+      {n:'Racing Green',h:'#1A4A2E',c:'CX-AUTO-G01'},
+      {n:'Burnt Orange',h:'#D35400',c:'CX-AUTO-O02'},
+      {n:'Silver Mist',h:'#95A5A6',c:'CX-AUTO-S02'},
+      {n:'Deep Violet',h:'#4A235A',c:'CX-AUTO-V01'},
+      {n:'Ice Blue',h:'#5DADE2',c:'CX-AUTO-B06'},
+      {n:'Graphite',h:'#4A4A4A',c:'CX-AUTO-K03'},
+      {n:'Cream',h:'#F5E6C8',c:'CX-AUTO-W03'},
+      {n:'Rose Gold',h:'#B76E79',c:'CX-AUTO-R04'},
+      {n:'Cobalt',h:'#0047AB',c:'CX-AUTO-B08'},
+      {n:'Army Green',h:'#4B5320',c:'CX-AUTO-G07'},
+      {n:'Coral',h:'#FF6B6B',c:'CX-AUTO-R06'},
+    ],
+    draw(c) { return `
+      <rect x="50" y="140" width="440" height="16" rx="5" fill="${c.trim}"/>
+      <path d="M75 140 L100 85 L185 62 L355 62 L430 85 L465 140 Z" fill="${c.body}"/>
+      <path d="M108 85 L130 65 L185 62 L355 62 L392 65 L412 85 Z" fill="${c.roof}"/>
+      <path d="M115 85 L132 67 L190 65 L190 85 Z" fill="${c.windows}" opacity="0.82"/>
+      <path d="M200 65 L196 85 L300 85 L300 65 Z" fill="${c.windows}" opacity="0.82"/>
+      <path d="M310 65 L310 85 L385 85 L368 67 Z" fill="${c.windows}" opacity="0.82"/>
+      <line x1="193" y1="65" x2="196" y2="85" stroke="rgba(0,0,0,0.15)" stroke-width="2"/>
+      <line x1="303" y1="65" x2="305" y2="85" stroke="rgba(0,0,0,0.15)" stroke-width="2"/>
+      <ellipse cx="155" cy="156" rx="34" ry="34" fill="#222"/>
+      <ellipse cx="155" cy="156" rx="22" ry="22" fill="#444"/>
+      <ellipse cx="155" cy="156" rx="9" ry="9" fill="#888"/>
+      <ellipse cx="385" cy="156" rx="34" ry="34" fill="#222"/>
+      <ellipse cx="385" cy="156" rx="22" ry="22" fill="#444"/>
+      <ellipse cx="385" cy="156" rx="9" ry="9" fill="#888"/>
+      <rect x="53" y="120" width="434" height="12" rx="2" fill="${c.body}" opacity="0.55"/>
+      <rect x="455" y="112" width="20" height="14" rx="3" fill="#F4D03F" opacity="0.9"/>
+      <rect x="63" y="112" width="20" height="14" rx="3" fill="#E74C3C" opacity="0.85"/>
+      <rect x="48" y="156" width="444" height="5" rx="2" fill="rgba(0,0,0,0.12)"/>
+      <ellipse cx="270" cy="190" rx="200" ry="8" fill="rgba(0,0,0,0.06)"/>
+    `; }
+  },
+  arch: {
+    label: 'Architectural paint',
+    parts: ['walls','roof','door','windows'],
+    partLabels: { walls:'Walls', roof:'Roof', door:'Door & frames', windows:'Window glass' },
+    defaults: { walls:'#E8D5B7', roof:'#7B3F00', door:'#4A3728', windows:'#AED6F1' },
+    swatches: [
+      {n:'Sand Stone',h:'#E8D5B7',c:'CX-ARCH-A01'},
+      {n:'Warm White',h:'#F5F0E8',c:'CX-ARCH-A02'},
+      {n:'Terracotta',h:'#C1440E',c:'CX-ARCH-A03'},
+      {n:'Sage Green',h:'#7D9B76',c:'CX-ARCH-A04'},
+      {n:'Dusty Rose',h:'#C4836A',c:'CX-ARCH-A05'},
+      {n:'Colonial Blue',h:'#4A6FA5',c:'CX-ARCH-A06'},
+      {n:'Charcoal',h:'#3D3D3D',c:'CX-ARCH-A07'},
+      {n:'Cream Yellow',h:'#F0E68C',c:'CX-ARCH-A08'},
+      {n:'Brick Red',h:'#8B2500',c:'CX-ARCH-A09'},
+      {n:'Olive',h:'#6B7A3A',c:'CX-ARCH-A10'},
+      {n:'Light Grey',h:'#C8C8C8',c:'CX-ARCH-A11'},
+      {n:'Navy',h:'#1F3A5F',c:'CX-ARCH-A12'},
+      {n:'Coral Pink',h:'#E8967A',c:'CX-ARCH-A13'},
+      {n:'Forest',h:'#2E5E3E',c:'CX-ARCH-A14'},
+      {n:'Lavender',h:'#9B89C4',c:'CX-ARCH-A15'},
+      {n:'Deep Teal',h:'#1A5E6A',c:'CX-ARCH-A16'},
+    ],
+    draw(c) { return `
+      <rect x="90" y="115" width="360" height="105" fill="${c.walls}"/>
+      <polygon points="70,115 270,28 470,115" fill="${c.roof}"/>
+      <rect x="80" y="108" width="380" height="10" rx="2" fill="${c.roof}" opacity="0.7"/>
+      <rect x="218" y="158" width="84" height="62" rx="3" fill="${c.door}"/>
+      <rect x="218" y="158" width="84" height="7" rx="2" fill="rgba(0,0,0,0.15)"/>
+      <circle cx="293" cy="191" r="4.5" fill="#D4AC0D"/>
+      <rect x="116" y="130" width="60" height="50" rx="3" fill="${c.windows}" opacity="0.85"/>
+      <line x1="146" y1="130" x2="146" y2="180" stroke="rgba(0,0,0,0.18)" stroke-width="1.5"/>
+      <line x1="116" y1="155" x2="176" y2="155" stroke="rgba(0,0,0,0.18)" stroke-width="1.5"/>
+      <rect x="344" y="130" width="60" height="50" rx="3" fill="${c.windows}" opacity="0.85"/>
+      <line x1="374" y1="130" x2="374" y2="180" stroke="rgba(0,0,0,0.18)" stroke-width="1.5"/>
+      <line x1="344" y1="155" x2="404" y2="155" stroke="rgba(0,0,0,0.18)" stroke-width="1.5"/>
+      <rect x="85" y="218" width="370" height="5" rx="2" fill="rgba(0,0,0,0.1)"/>
+      <ellipse cx="270" cy="225" rx="190" ry="7" fill="rgba(0,0,0,0.06)"/>
+    `; }
+  },
+  marine: {
+    label: 'Marine coatings',
+    parts: ['hull','deck','superstructure','trim'],
+    partLabels: { hull:'Hull', deck:'Deck surface', superstructure:'Superstructure', trim:'Accent stripe' },
+    defaults: { hull:'#1A3A5C', deck:'#E8E0D0', superstructure:'#F0F0F0', trim:'#C0392B' },
+    swatches: [
+      {n:'Navy Hull',h:'#1A3A5C',c:'CX-MAR-M01'},
+      {n:'Deep Black',h:'#1C1C1C',c:'CX-MAR-M02'},
+      {n:'Marine White',h:'#F5F5F5',c:'CX-MAR-M03'},
+      {n:'Bottle Green',h:'#1A4A2E',c:'CX-MAR-M04'},
+      {n:'Signal Red',h:'#C0392B',c:'CX-MAR-M05'},
+      {n:'Royal Blue',h:'#1F4E9E',c:'CX-MAR-M06'},
+      {n:'Rust Guard',h:'#8B3A2A',c:'CX-MAR-M07'},
+      {n:'Antifoul Red',h:'#A83228',c:'CX-MAR-M08'},
+      {n:'Grey Topside',h:'#7F8C8D',c:'CX-MAR-M09'},
+      {n:'Cream',h:'#FAF0DC',c:'CX-MAR-M10'},
+      {n:'Offshore Blue',h:'#2E6DA4',c:'CX-MAR-M11'},
+      {n:'Carbon Black',h:'#2C2C2C',c:'CX-MAR-M12'},
+      {n:'Sea Green',h:'#2E8B57',c:'CX-MAR-M13'},
+      {n:'Cobalt',h:'#0047AB',c:'CX-MAR-M14'},
+      {n:'Sand',h:'#D4B896',c:'CX-MAR-M15'},
+      {n:'Storm Grey',h:'#5A6475',c:'CX-MAR-M16'},
+    ],
+    draw(c) { return `
+      <path d="M35 158 L82 118 L458 118 L505 158 L482 178 L58 178 Z" fill="${c.hull}"/>
+      <rect x="82" y="100" width="376" height="20" rx="2" fill="${c.deck}"/>
+      <rect x="130" y="52" width="280" height="50" rx="4" fill="${c.superstructure}"/>
+      <rect x="145" y="63" width="40" height="30" rx="2" fill="#AED6F1" opacity="0.82"/>
+      <rect x="196" y="63" width="40" height="30" rx="2" fill="#AED6F1" opacity="0.82"/>
+      <rect x="264" y="63" width="40" height="30" rx="2" fill="#AED6F1" opacity="0.82"/>
+      <rect x="315" y="63" width="40" height="30" rx="2" fill="#AED6F1" opacity="0.82"/>
+      <rect x="82" y="116" width="376" height="6" rx="2" fill="${c.trim}"/>
+      <line x1="270" y1="18" x2="270" y2="54" stroke="#888" stroke-width="2.5"/>
+      <polygon points="270,18 294,34 270,30" fill="#C0392B"/>
+      <path d="M35 178 Q270 190 505 178" stroke="rgba(0,0,0,0.08)" stroke-width="3" fill="none"/>
+      <path d="M20 182 Q270 200 520 182" stroke="#AED6F1" stroke-width="10" fill="none" opacity="0.2"/>
+      <ellipse cx="270" cy="200" rx="220" ry="8" fill="rgba(0,0,0,0.06)"/>
+    `; }
+  },
+  industrial: {
+    label: 'Industrial coatings',
+    parts: ['structure','panels','pipes','markings'],
+    partLabels: { structure:'Steel structure', panels:'Cladding panels', pipes:'Pipework', markings:'Safety markings' },
+    defaults: { structure:'#5D6D7E', panels:'#AEB6BF', pipes:'#E59866', markings:'#F4D03F' },
+    swatches: [
+      {n:'Industrial Grey',h:'#5D6D7E',c:'CX-IND-I01'},
+      {n:'Safety Yellow',h:'#F4D03F',c:'CX-IND-I02'},
+      {n:'Machinery Red',h:'#C0392B',c:'CX-IND-I03'},
+      {n:'Oxide Primer',h:'#8B4513',c:'CX-IND-I04'},
+      {n:'Light Grey',h:'#AEB6BF',c:'CX-IND-I05'},
+      {n:'Pipe Orange',h:'#E59866',c:'CX-IND-I06'},
+      {n:'Safety Green',h:'#1E8449',c:'CX-IND-I07'},
+      {n:'Steel Blue',h:'#2E6DA4',c:'CX-IND-I08'},
+      {n:'Epoxy White',h:'#F0F0F0',c:'CX-IND-I09'},
+      {n:'Dark Charcoal',h:'#2C3E50',c:'CX-IND-I10'},
+      {n:'Warning Red',h:'#E74C3C',c:'CX-IND-I11'},
+      {n:'Zinc Primer',h:'#7D8A8A',c:'CX-IND-I12'},
+      {n:'Cobalt Blue',h:'#0047AB',c:'CX-IND-I13'},
+      {n:'Lime Safety',h:'#BFFF00',c:'CX-IND-I14'},
+      {n:'Black Epoxy',h:'#1C1C1C',c:'CX-IND-I15'},
+      {n:'Cream',h:'#F5E6C8',c:'CX-IND-I16'},
+    ],
+    draw(c) { return `
+      <rect x="75" y="42" width="110" height="170" rx="4" fill="${c.structure}"/>
+      <rect x="215" y="42" width="110" height="170" rx="4" fill="${c.structure}"/>
+      <rect x="355" y="42" width="110" height="170" rx="4" fill="${c.structure}"/>
+      <rect x="85" y="52" width="90" height="65" rx="2" fill="${c.panels}"/>
+      <rect x="225" y="52" width="90" height="65" rx="2" fill="${c.panels}"/>
+      <rect x="365" y="52" width="90" height="65" rx="2" fill="${c.panels}"/>
+      <rect x="85" y="132" width="90" height="65" rx="2" fill="${c.panels}"/>
+      <rect x="225" y="132" width="90" height="65" rx="2" fill="${c.panels}"/>
+      <rect x="365" y="132" width="90" height="65" rx="2" fill="${c.panels}"/>
+      <rect x="55" y="98" width="432" height="14" rx="4" fill="${c.pipes}"/>
+      <rect x="55" y="124" width="432" height="10" rx="3" fill="${c.pipes}" opacity="0.65"/>
+      <rect x="150" y="42" width="65" height="14" rx="3" fill="${c.pipes}" opacity="0.8"/>
+      <rect x="290" y="42" width="65" height="14" rx="3" fill="${c.pipes}" opacity="0.8"/>
+      <rect x="72" y="39" width="11" height="175" rx="2" fill="${c.markings}"/>
+      <rect x="212" y="39" width="11" height="175" rx="2" fill="${c.markings}"/>
+      <rect x="352" y="39" width="11" height="175" rx="2" fill="${c.markings}"/>
+      <rect x="466" y="39" width="11" height="175" rx="2" fill="${c.markings}"/>
+      <rect x="60" y="210" width="422" height="8" rx="3" fill="rgba(0,0,0,0.12)"/>
+      <ellipse cx="270" cy="222" rx="200" ry="7" fill="rgba(0,0,0,0.06)"/>
+    `; }
+  }
+};
+
+let cat = 'auto';
+let part = CATS[cat].parts[0];
+let colors = {};
+
+function init(c) {
+  cat = c;
+  colors = {...CATS[cat].defaults};
+  part = CATS[cat].parts[0];
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    t.classList.toggle('active', ['auto','arch','marine','industrial'][i] === c);
+  });
+  renderAll();
+}
+
+function renderAll() {
+  renderScene();
+  renderParts();
+  renderSwatches();
+  updateBar();
+}
+
+function renderScene() {
+  document.getElementById('scene-svg').innerHTML = CATS[cat].draw(colors);
+}
+
+function renderParts() {
+  const row = document.getElementById('parts-row');
+  row.innerHTML = '';
+  CATS[cat].parts.forEach(p => {
+    const b = document.createElement('button');
+    b.className = 'part-btn' + (p === part ? ' active' : '');
+    b.innerHTML = `<span class="part-dot" style="background:${colors[p]}"></span>${CATS[cat].partLabels[p]}`;
+    b.onclick = () => { part = p; renderParts(); updateBar(); renderSwatches(); };
+    row.appendChild(b);
+  });
+}
+
+function renderSwatches() {
+  const grid = document.getElementById('swatches-grid');
+  grid.innerHTML = '';
+  CATS[cat].swatches.forEach(sw => {
+    const el = document.createElement('div');
+    el.className = 'swatch' + (colors[part] === sw.h ? ' active' : '');
+    el.style.background = sw.h;
+    el.title = sw.n + ' — ' + sw.h;
+    el.onclick = () => {
+      colors[part] = sw.h;
+      renderScene();
+      renderParts();
+      renderSwatches();
+      updateBar(sw);
+    };
+    grid.appendChild(el);
+  });
+}
+
+function updateBar(sw) {
+  if (!sw) sw = CATS[cat].swatches.find(s => s.h === colors[part]);
+  const preview = document.getElementById('sel-preview');
+  const name = document.getElementById('sel-name');
+  const meta = document.getElementById('sel-meta');
+  preview.style.background = colors[part];
+  if (sw) {
+    name.textContent = sw.n;
+    meta.textContent = sw.h.toUpperCase() + ' · ' + sw.c + ' · ' + CATS[cat].label;
+  } else {
+    name.textContent = CATS[cat].partLabels[part];
+    meta.textContent = colors[part].toUpperCase();
+  }
+}
+
+function switchCategory(c) { init(c); }
+
+init('auto');
+</script>
+</body>
+</html>

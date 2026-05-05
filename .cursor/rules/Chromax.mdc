@@ -1,0 +1,12 @@
+---
+alwaysApply: true
+---
+
+This is the Chromax-MCR platform. A paint manufacturing 
+e-commerce site with a custom CMS and admin system. 
+Always refer to the project specs in /docs before 
+generating any component or page. The design system uses 
+Inter + Fraunces fonts, deep navy (#1a1a2e) and gold 
+(#E8A020) brand colours, 12px border radius on cards, 
+8px on buttons. Tailwind only for styling. TypeScript 
+strict mode. App router pattern.

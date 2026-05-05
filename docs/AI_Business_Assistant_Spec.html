@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Business Assistant — Product Specification v1</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f4f4f0;padding:2rem 1rem;color:#333}
+.page{max-width:980px;margin:0 auto}
+h1{font-size:28px;font-weight:600;color:#1a1a2e;margin-bottom:4px}
+h2{font-size:18px;font-weight:500;color:#222;margin:2rem 0 .75rem;padding-bottom:8px;border-bottom:2px solid #eee}
+h3{font-size:14px;font-weight:600;color:#333;margin-bottom:8px}
+h4{font-size:12px;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.meta{font-size:12px;color:#888;margin-bottom:1.5rem;display:flex;gap:10px;flex-wrap:wrap}
+.meta span{background:#fff;padding:3px 10px;border-radius:20px;border:1px solid #e8e8e4}
+.gold-line{height:4px;background:#E8A020;border-radius:2px;margin-bottom:2rem}
+.col2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:10px 0}
+.col3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:10px 0}
+.card{background:#fff;border-radius:12px;padding:16px;border:1px solid #e8e8e4}
+.card.bl{border-left:4px solid #185FA5}
+.card.gl{border-left:4px solid #0F6E56}
+.card.al{border-left:4px solid #BA7517}
+.card.pl{border-left:4px solid #534AB7}
+.card.cl{border-left:4px solid #993C1D}
+.badge{display:inline-block;font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;margin-bottom:8px}
+.bb{background:#E6F1FB;color:#0C447C}
+.bg{background:#EAF3DE;color:#27500A}
+.ba{background:#FAEEDA;color:#633806}
+.bp{background:#EEEDFE;color:#3C3489}
+.bc{background:#FAECE7;color:#712B13}
+ul{padding-left:16px;margin:6px 0}
+li{font-size:13px;color:#555;margin-bottom:5px;line-height:1.6}
+p{font-size:13px;color:#555;line-height:1.7;margin:6px 0}
+strong{color:#222}
+.info{background:#E6F1FB;border:1px solid #85B7EB;border-radius:8px;padding:12px 16px;margin:10px 0}
+.info p,.info li{color:#0C447C}
+.success{background:#EAF3DE;border:1px solid #97C459;border-radius:8px;padding:12px 16px;margin:10px 0}
+.success p,.success li{color:#27500A}
+.warn{background:#FAEEDA;border:1px solid #EF9F27;border-radius:8px;padding:12px 16px;margin:10px 0}
+.warn p,.warn li{color:#633806}
+
+/* PRODUCT OVERVIEW */
+.product-hero{background:#1a1a2e;border-radius:14px;padding:24px;margin-bottom:1.5rem}
+.product-name{font-size:32px;font-weight:600;color:#E8A020;margin-bottom:6px}
+.product-tagline{font-size:15px;color:rgba(255,255,255,0.65);margin-bottom:16px}
+.product-pills{display:flex;flex-wrap:wrap;gap:7px}
+.product-pill{font-size:11px;background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.75);padding:4px 12px;border-radius:20px;border:0.5px solid rgba(255,255,255,0.15)}
+
+/* TWO MODES */
+.modes{display:grid;grid-template-columns:1fr 50px 1fr;gap:0;margin:12px 0}
+.mode-side{border-radius:12px;padding:16px}
+.mode-item{padding:6px 10px;border-radius:6px;font-size:12px;line-height:1.5;margin-bottom:5px}
+.mode-center{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;font-size:10px;color:#aaa;text-align:center}
+
+/* Q&A EXAMPLES */
+.qa{background:#f9f9f7;border-radius:8px;padding:12px;margin-bottom:8px;border:1px solid #eee}
+.qa-q{font-size:13px;font-weight:500;color:#222;margin-bottom:5px}
+.qa-a{font-size:12px;color:#555;line-height:1.7}
+.who{display:inline-block;font-size:10px;font-weight:600;padding:1px 6px;border-radius:6px;margin-right:5px}
+
+/* PROACTIVE */
+.proactive{border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid transparent}
+.proactive .trigger{font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px}
+.proactive .msg{font-size:12px;line-height:1.7;font-style:italic}
+.proactive .meta{font-size:10px;margin-top:6px;opacity:.7}
+
+/* SYSTEM HEALTH */
+.health-example{background:#1E1E2E;border-radius:8px;padding:14px;margin-bottom:8px}
+.health-q{font-size:12px;color:#AED6F1;margin-bottom:6px;font-weight:500}
+.health-a{font-size:11px;color:#A8D8A8;line-height:1.8;font-family:monospace}
+
+/* ONBOARDING STEPS */
+.ob-step{display:flex;gap:14px;padding:12px 0;border-bottom:1px solid #eee;align-items:flex-start}
+.ob-step:last-child{border-bottom:none}
+.ob-num{width:28px;height:28px;border-radius:50%;background:#1a1a2e;color:#E8A020;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+.ob-body{flex:1}
+.ob-title{font-size:13px;font-weight:600;color:#222;margin-bottom:4px}
+.ob-desc{font-size:12px;color:#555;line-height:1.6}
+.ob-tag{display:inline-block;font-size:10px;padding:1px 7px;border-radius:8px;margin-left:6px;font-weight:500}
+
+/* TOOL TABLE */
+table{width:100%;border-collapse:collapse;margin:10px 0;font-size:12px}
+th{padding:8px 10px;text-align:left;background:#1a1a2e;color:#fff;font-weight:500;font-size:11px}
+td{padding:8px 10px;border-bottom:1px solid #eee;vertical-align:top;line-height:1.5;color:#555}
+td:first-child{font-family:monospace;font-size:11px;color:#185FA5;font-weight:500;white-space:nowrap}
+tr:nth-child(even) td{background:#f9f9f7}
+.tag{display:inline-block;font-size:9px;font-weight:600;padding:1px 5px;border-radius:6px;margin:1px}
+.tag.r{background:#E6F1FB;color:#0C447C}
+.tag.p{background:#EAF3DE;color:#27500A}
+.tag.h{background:#FAECE7;color:#712B13}
+
+/* CONNECTION OPTIONS */
+.conn-option{border:1px solid #e8e8e4;border-radius:10px;padding:14px;background:#fff;margin-bottom:8px}
+.conn-title{font-size:13px;font-weight:600;color:#222;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.conn-badge{font-size:10px;padding:2px 7px;border-radius:8px;font-weight:500}
+.conn-desc{font-size:12px;color:#555;line-height:1.6;margin-bottom:6px}
+.conn-code{background:#1E1E2E;border-radius:6px;padding:8px 12px;font-family:monospace;font-size:11px;color:#A8D8A8;line-height:1.7}
+
+/* EMAIL DIGEST PREVIEW */
+.email-preview{border:1px solid #e8e8e4;border-radius:10px;overflow:hidden;margin:10px 0}
+.email-header{background:#1a1a2e;padding:12px 16px}
+.email-from{font-size:11px;color:rgba(255,255,255,0.5);margin-bottom:2px}
+.email-subject{font-size:13px;font-weight:500;color:#E8A020}
+.email-body{padding:16px;background:#fff}
+.email-section{margin-bottom:12px}
+.email-section-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:#888;margin-bottom:6px}
+.email-row{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f0f0f0;font-size:12px}
+.email-row:last-child{border-bottom:none}
+.email-row .label{color:#555}
+.email-row .value{font-weight:500;color:#222}
+.email-row .up{color:#0F6E56}
+.email-row .down{color:#993C1D}
+.email-alert{background:#FAEEDA;border-radius:6px;padding:8px 10px;font-size:11px;color:#633806;margin-bottom:5px;display:flex;gap:6px}
+
+/* TECH STACK */
+.stack-row{display:grid;grid-template-columns:160px 1fr 1fr;gap:10px;padding:8px 0;border-bottom:1px solid #eee;align-items:start;font-size:12px}
+.stack-row:last-child{border-bottom:none}
+.stack-layer{font-weight:600;color:#222}
+.stack-tech{color:#185FA5;font-family:monospace;font-size:11px}
+.stack-why{color:#555;line-height:1.5}
+
+/* CRON */
+.cron-row{display:flex;gap:12px;padding:8px 0;border-bottom:1px solid #eee;align-items:flex-start}
+.cron-row:last-child{border-bottom:none}
+.cron-time{font-size:11px;font-weight:600;color:#185FA5;min-width:150px;flex-shrink:0;padding-top:2px}
+.cron-desc{font-size:12px;color:#555;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- TITLE -->
+  <h1>AI Business Assistant</h1>
+  <div class="meta">
+    <span>Status: Product spec complete</span>
+    <span>Version: 1.0</span>
+    <span>Stack: Node.js · Claude API</span>
+    <span>Client #1: Chromax-MCR</span>
+    <span>Notifications: Email only</span>
+  </div>
+  <div class="gold-line"></div>
+
+  <!-- PRODUCT HERO -->
+  <div class="product-hero">
+    <div class="product-name">AI Business Assistant</div>
+    <div class="product-tagline">A standalone Node.js AI system that integrates with any ERP or business platform. Knows the business inside out — answers questions, monitors health, and sends intelligent summaries.</div>
+    <div class="product-pills">
+      <span class="product-pill">Standalone Node.js system</span>
+      <span class="product-pill">Integrates with any ERP</span>
+      <span class="product-pill">External customer widget</span>
+      <span class="product-pill">Internal business assistant</span>
+      <span class="product-pill">System health monitoring</span>
+      <span class="product-pill">Email summaries</span>
+      <span class="product-pill">Chromax is client #1</span>
+    </div>
+  </div>
+
+  <div class="warn"><p><strong>Build note:</strong> This is a separate system from the Chromax website and ERP. It integrates with Chromax as its first client but is architected to work with any business. Chromax is the testing and validation platform — not the product itself.</p></div>
+
+  <!-- SECTION 1: TWO MODES -->
+  <h2>1. Two Modes — One System</h2>
+  <div class="modes">
+    <div class="mode-side" style="background:#EBF3FF">
+      <h3 style="color:#0C447C;margin-bottom:10px">🌐 External mode — customer widget</h3>
+      <div class="mode-item" style="background:#185FA5;color:#fff">Embedded on the business website</div>
+      <div class="mode-item" style="background:rgba(24,95,165,0.1);color:#0C447C">Knows all products, pricing, policies</div>
+      <div class="mode-item" style="background:rgba(24,95,165,0.1);color:#0C447C">Answers customer questions 24/7</div>
+      <div class="mode-item" style="background:rgba(24,95,165,0.1);color:#0C447C">Recommends right product for project</div>
+      <div class="mode-item" style="background:rgba(24,95,165,0.1);color:#0C447C">Captures and logs leads</div>
+      <div class="mode-item" style="background:rgba(24,95,165,0.1);color:#0C447C">Takes and pre-qualifies quote requests</div>
+      <div class="mode-item" style="background:rgba(24,95,165,0.1);color:#0C447C">Escalates complex queries to human (email)</div>
+      <p style="margin-top:10px;font-size:11px;color:#185FA5;font-style:italic">Reactive only. Waits for customer to initiate.</p>
+    </div>
+    <div class="mode-center">
+      <div style="font-size:20px">⇄</div>
+      <div>Same<br>system</div>
+      <div style="width:1px;height:30px;background:#ddd"></div>
+      <div>Shared<br>config</div>
+    </div>
+    <div class="mode-side" style="background:#EDFAF4">
+      <h3 style="color:#27500A;margin-bottom:10px">🏢 Internal mode — ERP assistant</h3>
+      <div class="mode-item" style="background:#0F6E56;color:#fff">Embedded in the ERP/admin dashboard</div>
+      <div class="mode-item" style="background:rgba(15,110,86,0.1);color:#085041">Full context of orders, sales, finance, staff</div>
+      <div class="mode-item" style="background:rgba(15,110,86,0.1);color:#085041">Answers business questions in plain language</div>
+      <div class="mode-item" style="background:rgba(15,110,86,0.1);color:#085041">Proactive email summaries — daily or weekly</div>
+      <div class="mode-item" style="background:rgba(15,110,86,0.1);color:#085041">Flags overdue orders, low stock, lost revenue</div>
+      <div class="mode-item" style="background:rgba(15,110,86,0.1);color:#085041">System health monitoring — explains ERP errors</div>
+      <div class="mode-item" style="background:rgba(15,110,86,0.1);color:#085041">Configurable alert schedule per business owner</div>
+      <p style="margin-top:10px;font-size:11px;color:#0F6E56;font-style:italic">Reactive (answers questions) + proactive (scheduled summaries + real-time health alerts).</p>
+    </div>
+  </div>
+
+  <!-- SECTION 2: INTERNAL REACTIVE -->
+  <h2>2. Internal Mode — Business Intelligence (Reactive)</h2>
+  <p>Staff and owners ask questions in plain language. The AI queries the connected system and gives a clear, contextual answer.</p>
+  <div class="col2" style="margin-top:12px">
+    <div>
+      <div class="qa"><div class="qa-q"><span class="who" style="background:#0F6E56;color:#fff">Owner</span>"What's our profit so far this month?"</div><div class="qa-a">Net profit for April to date is ₦1,247,300 — up 18% from March. Marine coatings are your strongest category at ₦680,000 gross margin. Industrial coatings are down 12% — 3 bulk orders have been delayed this month.</div></div>
+      <div class="qa"><div class="qa-q"><span class="who" style="background:#185FA5;color:#fff">Sales</span>"Which customers haven't reordered in 60 days?"</div><div class="qa-a">14 customers last ordered more than 60 days ago. Highest-value: Emeka Construction (₦420,000 avg order) and BuildRight Lagos (₦310,000 avg). Want me to draft a re-engagement message for the top 5?</div></div>
+      <div class="qa"><div class="qa-q"><span class="who" style="background:#BA7517;color:#fff">Manager</span>"How long are orders taking to fulfil on average?"</div><div class="qa-a">Average fulfilment time this week is 2.4 hours per order, up from 1.8 hours last week. The bottleneck is the packing stage — 6 orders waited over 4 hours in 'packed' status before dispatch yesterday.</div></div>
+    </div>
+    <div>
+      <div class="qa"><div class="qa-q"><span class="who" style="background:#534AB7;color:#fff">Owner</span>"Are international orders profitable?"</div><div class="qa-a">International orders have a 34% gross margin vs 28% for local. However, shipping delays are generating refund requests — 2 this month totalling £180. Net international margin after refunds: 29%.</div></div>
+      <div class="qa"><div class="qa-q"><span class="who" style="background:#0F6E56;color:#fff">Manager</span>"What were our top 5 products last quarter?"</div><div class="qa-a">1. ChromaShield Marine 400 5L — 847 units. 2. ChromaGuard Industrial EP — 612 units. 3. ChromaGloss Topcoat UV — 534 units. 4. ChromaBase Primer — 489 units. 5. Marine White Topcoat — 391 units.</div></div>
+      <div class="qa"><div class="qa-q"><span class="who" style="background:#993C1D;color:#fff">Owner</span>"Give me a production summary for this week."</div><div class="qa-a">This week: 14 batches completed, 3 in progress. Total output: 8,400 litres. CX-MAR-M01 had a 6-hour delay on Tuesday due to a raw material shortage. Current production queue: 4 batches scheduled for tomorrow.</div></div>
+    </div>
+  </div>
+
+  <!-- SECTION 3: SYSTEM HEALTH -->
+  <h2>3. Internal Mode — System Health Monitoring</h2>
+  <p>This is what separates this product from a generic chatbot. Staff can ask why the system is slow or broken — and get a real, technical answer in plain language.</p>
+
+  <div class="col2" style="margin-top:12px">
+    <div>
+      <div class="health-example">
+        <div class="health-q">Staff: "Why is the ERP so slow right now?"</div>
+        <div class="health-a">
+          I checked the server metrics. Here's what I found:<br><br>
+          • CPU usage: 87% (normal is below 60%)<br>
+          • The slow query log shows a report query has been running for 4 minutes — this is blocking other requests<br>
+          • Memory: 78% — not critical but elevated<br><br>
+          Likely cause: Someone ran a large report (possibly the monthly sales export). The system should return to normal in 3–5 minutes once that query completes. If it doesn't resolve, restart the queue worker.
+        </div>
+      </div>
+      <div class="health-example">
+        <div class="health-q">Staff: "The payment page keeps failing. What's wrong?"</div>
+        <div class="health-a">
+          I checked the error logs from the last 30 minutes:<br><br>
+          • 14 failed payment requests — all starting at 14:32<br>
+          • Error: "Paystack API timeout after 30s"<br>
+          • External ping to api.paystack.co: 503 response<br><br>
+          This is a Paystack outage — not an issue on your end. You can check their status at status.paystack.com. Orders placed in the last 30 minutes may need to be retried by customers once they restore service.
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="health-example">
+        <div class="health-q">Staff: "The dashboard is showing wrong stock numbers."</div>
+        <div class="health-a">
+          I checked the sync logs between the dashboard and ERP:<br><br>
+          • Last successful sync: 2 hours ago<br>
+          • 3 sync events failed with: "Connection refused — Redis queue worker not running"<br>
+          • Queue depth: 47 pending events backed up<br><br>
+          The queue worker has stopped. This is why stock updates aren't coming through. Fix: SSH to the server and run: pm2 restart queue-worker. The backlog will clear automatically once it restarts.
+        </div>
+      </div>
+      <div class="health-example">
+        <div class="health-q">Staff: "Why can't I log in? It says invalid credentials."</div>
+        <div class="health-a">
+          I checked the authentication logs:<br><br>
+          • 6 failed login attempts for your email in the last 10 minutes<br>
+          • After 5 failed attempts, accounts are temporarily locked for 15 minutes<br>
+          • Lock expires at: 15:47<br><br>
+          Your account will unlock automatically in 8 minutes. If you didn't make those attempts, contact your admin — it may indicate someone is trying to access your account.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col2">
+    <div class="card gl">
+      <span class="badge bg">What the health monitor reads</span>
+      <h4>Internal log access</h4>
+      <ul>
+        <li>Server CPU, memory, and disk usage (via system metrics API)</li>
+        <li>Database slow query log — queries taking longer than threshold</li>
+        <li>Application error log — 4xx and 5xx errors with frequency and stack traces</li>
+        <li>Queue worker status — running, stopped, backlog depth</li>
+        <li>Sync event log — success/failure per event with payload summary</li>
+        <li>Auth log — failed login attempts, locked accounts</li>
+      </ul>
+      <h4 style="margin-top:12px">External monitoring</h4>
+      <ul>
+        <li>Ping check every 5 minutes — is the ERP responding?</li>
+        <li>API dependency checks — Paystack, Stripe, external services</li>
+        <li>Response time tracking — flags if average response time spikes</li>
+      </ul>
+    </div>
+    <div class="card bl">
+      <span class="badge bb">How it works technically</span>
+      <ul>
+        <li>A lightweight health agent runs on the ERP server — reads logs and system metrics, exposes a local API endpoint</li>
+        <li>The AI chatbot calls this endpoint when a health question is asked</li>
+        <li>For external monitoring — the AI system pings the ERP from outside every 5 minutes and logs response times</li>
+        <li>When a health issue is detected proactively — e.g. CPU above 90% for 5+ minutes — an email alert fires automatically</li>
+        <li>The AI synthesises raw log data into plain-language explanations</li>
+        <li>For Chromax specifically — the agent connects directly to the Laravel log files and MySQL slow query log</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- SECTION 4: PROACTIVE EMAIL -->
+  <h2>4. Proactive Email Summaries</h2>
+  <p>No WhatsApp. Email only. Business owner configures schedule — daily digest or weekly report. The AI generates the summary by running its tool functions and synthesising the results into a readable email.</p>
+
+  <div class="email-preview">
+    <div class="email-header">
+      <div class="email-from">From: assistant@yourbusiness.ai · To: owner@chromax.com</div>
+      <div class="email-subject">📊 Chromax Weekly Report — 14–20 April 2025</div>
+    </div>
+    <div class="email-body">
+      <div class="email-section">
+        <div class="email-section-title">Revenue summary</div>
+        <div class="email-row"><span class="label">Total revenue</span><span class="value up">₦2,440,000 ↑ +8% vs last week</span></div>
+        <div class="email-row"><span class="label">Marine coatings</span><span class="value up">₦980,000 ↑ +14%</span></div>
+        <div class="email-row"><span class="label">Industrial coatings</span><span class="value down">₦620,000 ↓ −11%</span></div>
+        <div class="email-row"><span class="label">Orders processed</span><span class="value">47 orders · 3 refunds</span></div>
+      </div>
+      <div class="email-section">
+        <div class="email-section-title">Needs your attention</div>
+        <div class="email-alert">⚠ Industrial coatings down 11% for second consecutive week. 3 B2B offers in this category declined. Consider pricing review.</div>
+        <div class="email-alert">⚠ Emeka Construction Ltd has not reordered in 68 days (avg order: ₦420,000). High-value customer at risk.</div>
+        <div class="email-alert">⚠ ChromaGuard Industrial EP stock at 8 units. At current sales rate, estimated stockout in 4 days.</div>
+      </div>
+      <div class="email-section">
+        <div class="email-section-title">System health</div>
+        <div class="email-row"><span class="label">ERP uptime</span><span class="value up">99.8% ↑</span></div>
+        <div class="email-row"><span class="label">Avg response time</span><span class="value">240ms (normal)</span></div>
+        <div class="email-row"><span class="label">Sync errors</span><span class="value">1 resolved automatically</span></div>
+      </div>
+      <p style="font-size:11px;color:#aaa;margin-top:10px">This summary was generated automatically. Reply to this email or open the assistant in your dashboard to ask follow-up questions.</p>
+    </div>
+  </div>
+
+  <div class="col2">
+    <div class="card al">
+      <span class="badge ba">Email schedule options</span>
+      <ul>
+        <li><strong>Daily digest</strong> — sent every morning at a time configured by the owner. Covers previous day's activity, pending items, any system alerts.</li>
+        <li><strong>Weekly report</strong> — sent every Monday morning. Full week summary with trends, comparisons, and recommendations.</li>
+        <li><strong>Both</strong> — owner can opt into daily + weekly simultaneously.</li>
+        <li><strong>Alert-only</strong> — no scheduled summary, only emails when something needs immediate attention.</li>
+        <li>Schedule and alert thresholds configured during onboarding and editable at any time.</li>
+      </ul>
+    </div>
+    <div class="card gl">
+      <span class="badge bg">What triggers an immediate alert email</span>
+      <ul>
+        <li>ERP becomes unreachable (external ping fails 3 times in a row)</li>
+        <li>CPU or memory on ERP server exceeds 90% for more than 5 minutes</li>
+        <li>Product stock drops below reorder threshold</li>
+        <li>Revenue category drops more than 25% week-on-week</li>
+        <li>High-value customer inactive beyond configured threshold</li>
+        <li>Queue worker stops — sync events backing up</li>
+        <li>External payment gateway returning errors</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- SECTION 5: ONBOARDING FLOW -->
+  <h2>5. Onboarding Flow — Connecting Any Business System</h2>
+  <p>Flexible connection — client chooses whichever method suits their setup. The onboarding wizard guides them through it step by step.</p>
+
+  <div class="ob-step">
+    <div class="ob-num">1</div>
+    <div class="ob-body">
+      <div class="ob-title">Create account and name your assistant</div>
+      <div class="ob-desc">Business name, industry type, primary contact email, timezone, preferred email summary schedule (daily / weekly / alerts only). This is the only required step before anything else.</div>
+    </div>
+  </div>
+  <div class="ob-step">
+    <div class="ob-num">2</div>
+    <div class="ob-body">
+      <div class="ob-title">Upload knowledge base — for the external customer widget</div>
+      <div class="ob-desc">Upload product catalogue documents (PDF, Word, Excel, CSV), pricing sheets, policy documents, FAQs. These are chunked, embedded, and stored in the AI's vector database. The external customer widget uses this knowledge to answer customer questions.<br><br>
+      Supported formats: PDF · DOCX · XLSX · CSV · plain text. Multiple files, any order. Can add more documents later at any time.</div>
+    </div>
+  </div>
+  <div class="ob-step">
+    <div class="ob-num">3</div>
+    <div class="ob-body">
+      <div class="ob-title">Connect your business system — for the internal assistant</div>
+      <div class="ob-desc">Client chooses one of three connection methods:</div>
+      <div style="margin-top:10px">
+        <div class="conn-option">
+          <div class="conn-title"><span class="conn-badge" style="background:#EAF3DE;color:#27500A">Option A — Recommended</span> Install the health agent + provide database read credentials</div>
+          <div class="conn-desc">A lightweight Node.js agent is installed on the ERP server. It exposes a local API that the AI queries for logs, system metrics, and health data. Separately, read-only database credentials are provided so the AI can query business data (orders, sales, stock etc.).</div>
+          <div class="conn-code">npm install -g @ai-assistant/agent<br>ai-agent init --port 4200 --log-path /var/log/app</div>
+        </div>
+        <div class="conn-option">
+          <div class="conn-title"><span class="conn-badge" style="background:#E6F1FB;color:#0C447C">Option B</span> ERP exposes a standard API</div>
+          <div class="conn-desc">If the client's ERP already has an API, the AI connects to it directly using provided credentials. The onboarding wizard maps the API endpoints to the AI's tool functions. Works well for standard ERPs (Odoo, Sage, SAP with API access).</div>
+          <div class="conn-code">Base URL: https://your-erp.com/api<br>Auth: Bearer token or API key<br>Wizard maps: /orders · /stock · /sales · /customers</div>
+        </div>
+        <div class="conn-option">
+          <div class="conn-title"><span class="conn-badge" style="background:#FAEEDA;color:#633806">Option C</span> Direct database read access</div>
+          <div class="conn-desc">For custom or legacy systems with no API — provide read-only database credentials (MySQL, PostgreSQL). The AI queries the database directly using predefined safe read-only queries. No write access ever granted.</div>
+          <div class="conn-code">DB host, port, database name<br>Read-only user credentials<br>Wizard identifies key tables automatically</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="ob-step">
+    <div class="ob-num">4</div>
+    <div class="ob-body">
+      <div class="ob-title">Configure alert thresholds and email schedule</div>
+      <div class="ob-desc">Set which events trigger immediate emails. Set stock reorder thresholds, revenue drop percentage threshold, customer inactivity threshold. Configure daily and/or weekly summary schedule and delivery time.</div>
+    </div>
+  </div>
+  <div class="ob-step">
+    <div class="ob-num">5</div>
+    <div class="ob-body">
+      <div class="ob-title">Get the embed snippet — for the external widget</div>
+      <div class="ob-desc">One script tag to paste into the business website. The widget appears immediately. Style (colour, position, greeting message) configurable from the dashboard without touching code.</div>
+      <div class="conn-code" style="margin-top:8px">&lt;script src="https://cdn.ai-assistant.com/widget.js" data-client="CHROMAX-001"&gt;&lt;/script&gt;</div>
+    </div>
+  </div>
+  <div class="ob-step">
+    <div class="ob-num">6</div>
+    <div class="ob-body">
+      <div class="ob-title">Embed internal assistant in ERP dashboard</div>
+      <div class="ob-desc">For the internal mode — a React component or iframe embed placed inside the ERP dashboard. For Chromax specifically, this is a React component dropped into the existing Laravel/React ERP dashboard. For other clients, an iframe snippet works with any system.</div>
+      <div class="conn-code" style="margin-top:8px">import AIAssistant from '@ai-assistant/react';<br>&lt;AIAssistant clientId="CHROMAX-001" mode="internal" /&gt;</div>
+    </div>
+  </div>
+
+  <!-- SECTION 6: TOOL FUNCTIONS -->
+  <h2>6. Tool Functions — How the AI Queries Business Data</h2>
+  <div class="info"><p><strong>Pattern:</strong> The AI never writes raw SQL or touches data directly. Each capability is a named function that runs a safe read-only query and returns structured JSON. The AI calls these functions based on what the question requires. Adding a new capability = adding one new function. Removing one = deleting it. No retraining needed.</p></div>
+  <table>
+    <tr><th>Function name</th><th>Mode</th><th>Data source</th><th>Purpose</th></tr>
+    <tr><td>get_revenue_summary</td><td><span class="tag r">Reactive</span><span class="tag p">Proactive</span></td><td>Sales / orders table</td><td>Profit questions, weekly report revenue section</td></tr>
+    <tr><td>get_unfulfilled_orders</td><td><span class="tag r">Reactive</span><span class="tag p">Proactive</span></td><td>Orders table</td><td>Overdue order alerts, fulfilment questions</td></tr>
+    <tr><td>get_stock_levels</td><td><span class="tag r">Reactive</span><span class="tag p">Proactive</span></td><td>Inventory table</td><td>Stock questions, low-stock alerts</td></tr>
+    <tr><td>get_customer_activity</td><td><span class="tag r">Reactive</span><span class="tag p">Proactive</span></td><td>Customers + orders</td><td>Retention alerts, customer account questions</td></tr>
+    <tr><td>get_b2b_offer_status</td><td><span class="tag r">Reactive</span><span class="tag p">Proactive</span></td><td>B2B offers table</td><td>Offer pipeline questions, response time nudges</td></tr>
+    <tr><td>get_staff_activity</td><td><span class="tag r">Reactive</span></td><td>Audit log table</td><td>Staff productivity and usage questions</td></tr>
+    <tr><td>get_sales_trend</td><td><span class="tag r">Reactive</span><span class="tag p">Proactive</span></td><td>Sales aggregated by period</td><td>Trend analysis, loss risk detection, weekly report</td></tr>
+    <tr><td>get_top_products</td><td><span class="tag r">Reactive</span></td><td>Order items grouped</td><td>Product performance questions</td></tr>
+    <tr><td>get_inactive_customers</td><td><span class="tag p">Proactive</span></td><td>Customers + last order date</td><td>Weekly retention scan</td></tr>
+    <tr><td>get_production_status</td><td><span class="tag r">Reactive</span><span class="tag p">Proactive</span></td><td>Manufacturing / production table</td><td>Production questions, batch delay alerts</td></tr>
+    <tr><td>get_server_health</td><td><span class="tag r">Reactive</span><span class="tag h">Health</span></td><td>Health agent API</td><td>CPU, memory, disk, process status</td></tr>
+    <tr><td>get_error_log_summary</td><td><span class="tag r">Reactive</span><span class="tag h">Health</span></td><td>App error log via agent</td><td>Recent errors, frequency, error types</td></tr>
+    <tr><td>get_slow_queries</td><td><span class="tag r">Reactive</span><span class="tag h">Health</span></td><td>DB slow query log via agent</td><td>Database performance issues</td></tr>
+    <tr><td>get_queue_status</td><td><span class="tag r">Reactive</span><span class="tag h">Health</span></td><td>Queue worker status via agent</td><td>Sync backlog, worker health questions</td></tr>
+    <tr><td>check_external_services</td><td><span class="tag h">Health</span></td><td>External ping + response codes</td><td>Payment gateway status, third-party API health</td></tr>
+  </table>
+
+  <!-- SECTION 7: PROACTIVE SCHEDULE -->
+  <h2>7. Proactive Schedule — When the System Acts Automatically</h2>
+  <div class="cron-row"><div class="cron-time">Daily · configurable time</div><div class="cron-desc">Daily digest email — yesterday's orders, revenue, fulfilment status, any overdue items, system health snapshot. Only sent if owner has opted into daily summaries.</div></div>
+  <div class="cron-row"><div class="cron-time">Weekly · configurable day</div><div class="cron-desc">Full weekly report email — revenue vs last week, top products, new leads, B2B offer outcomes, customer retention flags, staff activity summary, system health week summary.</div></div>
+  <div class="cron-row"><div class="cron-time">Every morning · 8am</div><div class="cron-desc">Scan for overdue orders (packed but not dispatched), unanswered B2B offers older than 12 hours, and low stock items. Queue alert emails for anything found.</div></div>
+  <div class="cron-row"><div class="cron-time">Every hour</div><div class="cron-desc">Check B2B offer response times. If an offer has no response after 22 hours, alert the sales contact by email.</div></div>
+  <div class="cron-row"><div class="cron-time">Every 5 minutes</div><div class="cron-desc">External ping to ERP. If 3 consecutive pings fail — immediate alert email to owner and admin contact. Pings resume silently when service restores.</div></div>
+  <div class="cron-row"><div class="cron-time">Every 10 minutes</div><div class="cron-desc">Read server health metrics from the agent. If CPU above 90% or memory above 95% for more than 10 minutes consecutively — immediate alert email with diagnosis.</div></div>
+  <div class="cron-row"><div class="cron-time">Weekly · Sunday</div><div class="cron-desc">Customer retention scan — identify high-value customers inactive beyond the configured threshold. Include in next weekly report with suggested action.</div></div>
+  <div class="cron-row"><div class="cron-time">Weekly · Sunday</div><div class="cron-desc">Sales trend analysis — compare this week vs last 4 weeks per category. If any category down more than 25%, generate loss risk section for weekly report and optionally send an immediate alert.</div></div>
+  <div class="cron-row"><div class="cron-time">Real-time · event-driven</div><div class="cron-desc">Stock drops below reorder threshold → immediate alert. Payment gateway starts returning errors → immediate alert. Queue worker stops → immediate alert. All triggered by the monitoring functions, not cron.</div></div>
+
+  <!-- SECTION 8: TECH STACK -->
+  <h2>8. Technical Stack</h2>
+  <div class="success"><p><strong>Core principle:</strong> The AI system is Node.js only. It does not share a codebase with Chromax (Laravel) or the website (Next.js). It communicates with those systems via APIs and database connections — it never imports or merges with them. This keeps it portable and reusable across different clients.</p></div>
+  <div class="stack-row" style="font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#888;background:#f5f5f3;padding:6px 0">
+    <span>Layer</span><span>Technology</span><span>Why</span>
+  </div>
+  <div class="stack-row"><div class="stack-layer">Core runtime</div><div class="stack-tech">Node.js + Express</div><div class="stack-why">Your existing stack. Fast async I/O for tool function calls and streaming responses.</div></div>
+  <div class="stack-row"><div class="stack-layer">AI inference</div><div class="stack-tech">Claude API (tool use)</div><div class="stack-why">Tool use / function calling handles the reactive mode. Structured outputs for email generation.</div></div>
+  <div class="stack-row"><div class="stack-layer">RAG pipeline</div><div class="stack-tech">LangChain.js + pgvector</div><div class="stack-why">Document chunking, embedding, and retrieval for the external customer widget knowledge base.</div></div>
+  <div class="stack-row"><div class="stack-layer">Embeddings</div><div class="stack-tech">nomic-embed-text via Ollama</div><div class="stack-why">Runs locally — free, fast, no API cost per document. Each client's knowledge base embedded on their server.</div></div>
+  <div class="stack-row"><div class="stack-layer">Vector database</div><div class="stack-tech">pgvector (PostgreSQL)</div><div class="stack-why">No extra service — vector similarity search as a PostgreSQL extension.</div></div>
+  <div class="stack-row"><div class="stack-layer">Application DB</div><div class="stack-tech">PostgreSQL (Supabase)</div><div class="stack-why">Stores client configs, conversation logs, alert settings, email schedule, onboarding state.</div></div>
+  <div class="stack-row"><div class="stack-layer">Scheduled jobs</div><div class="stack-tech">node-cron</div><div class="stack-why">Lightweight cron inside Node process. Each job calls the relevant tool functions and triggers email dispatch.</div></div>
+  <div class="stack-row"><div class="stack-layer">Email delivery</div><div class="stack-tech">Nodemailer + SendGrid</div><div class="stack-why">Nodemailer for sending, SendGrid for deliverability and tracking open rates.</div></div>
+  <div class="stack-row"><div class="stack-layer">Health agent</div><div class="stack-tech">Node.js microservice</div><div class="stack-why">Lightweight process installed on the client's ERP server. Reads logs and system metrics, exposes local REST API.</div></div>
+  <div class="stack-row"><div class="stack-layer">External monitoring</div><div class="stack-tech">Custom ping service (Node)</div><div class="stack-why">Runs on the AI system server. Pings client ERP endpoints every 5 minutes, logs response times and status codes.</div></div>
+  <div class="stack-row"><div class="stack-layer">Widget embed</div><div class="stack-tech">Vanilla JS + React (iframe)</div><div class="stack-why">Vanilla JS for the external customer widget — no framework dependency, works on any website. React component for internal ERP embed.</div></div>
+  <div class="stack-row"><div class="stack-layer">Client dashboard</div><div class="stack-tech">Next.js</div><div class="stack-why">Onboarding portal, document uploads, alert configuration, email schedule settings, usage analytics.</div></div>
+
+  <!-- SECTION 9: BUILD ORDER -->
+  <h2>9. Build Order — v1</h2>
+  <div class="col3">
+    <div class="card bl">
+      <div class="badge bb">Phase 1 — Core AI</div>
+      <ul>
+        <li>Node.js project setup with Claude API tool use</li>
+        <li>Write the 10 core tool functions against Chromax ERP</li>
+        <li>Test reactive mode — ask questions, get answers</li>
+        <li>Build the document upload + RAG pipeline</li>
+        <li>Test external widget against Chromax product catalogue</li>
+      </ul>
+    </div>
+    <div class="card gl">
+      <div class="badge bg">Phase 2 — Proactive + Email</div>
+      <ul>
+        <li>Set up node-cron with all scheduled jobs</li>
+        <li>Build email templates for daily digest and weekly report</li>
+        <li>Wire up Nodemailer + SendGrid</li>
+        <li>Build the health agent — install on Chromax ERP server</li>
+        <li>Add health tool functions and health Q&A</li>
+        <li>Test full alert flow end to end</li>
+      </ul>
+    </div>
+    <div class="card al">
+      <div class="badge ba">Phase 3 — Product</div>
+      <ul>
+        <li>Build the Next.js onboarding portal</li>
+        <li>Implement all three connection methods</li>
+        <li>Build the client dashboard (alert config, schedule, document management)</li>
+        <li>Vanilla JS external widget embeddable via script tag</li>
+        <li>React component for internal ERP embed</li>
+        <li>Onboard second client to validate generic flow</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
