@@ -145,6 +145,18 @@ function IconSettings() {
   );
 }
 
+function IconHelp() {
+  return (
+    <svg className={iconClass} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+      />
+    </svg>
+  );
+}
+
 function navLinkClass(active: boolean) {
   return [
     "flex items-center gap-3 px-4 py-2.5 mx-2 rounded-lg text-[13px] text-white/60",
@@ -365,6 +377,12 @@ export function AdminShell({ user, roles, children }: AdminShellProps) {
         {systemItems.length > 0 ? (
           <NavSection label="System" items={systemItems} pathname={pathname} />
         ) : null}
+        <div className="mx-2 mt-2 border-t border-white/10 pt-3">
+          <Link href="/admin/help" className={navLinkClass(isNavActive(pathname, "/admin/help"))}>
+            <IconHelp />
+            Help &amp; Manual
+          </Link>
+        </div>
       </nav>
       <div className="border-t border-white/10 px-4 py-3">
         <button
