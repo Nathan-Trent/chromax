@@ -27,7 +27,7 @@ export default async function ContactPage() {
       />
 
       <div className="bg-[#F5F0E8] py-16">
-        <div className="mx-auto grid max-w-[1280px] grid-cols-1 gap-14 px-6 lg:grid-cols-2 lg:gap-16">
+        <div className="mx-auto grid max-w-[1280px] grid-cols-1 gap-14 px-4 sm:px-6 lg:grid-cols-2 lg:gap-16 lg:px-8">
           <div>
             <div className="mb-8 flex gap-4">
               <span

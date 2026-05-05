@@ -65,7 +65,7 @@ export function AddToCartButton({
         disabled={buttonDisabled}
         onClick={handleClick}
         style={{ backgroundColor: accent }}
-        className="inline-flex w-full items-center justify-center gap-2 rounded-lg px-5 py-2.5 font-sans text-[13px] font-medium text-white opacity-100 transition-opacity duration-150 ease-in-out hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1a1a2e] disabled:pointer-events-none disabled:opacity-50 motion-reduce:transition-none"
+        className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg px-5 py-3 font-sans text-sm font-medium text-white opacity-100 transition-opacity duration-150 ease-in-out hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1a1a2e] disabled:pointer-events-none disabled:opacity-50 motion-reduce:transition-none sm:text-[13px]"
       >
         {buttonLabel}
       </button>

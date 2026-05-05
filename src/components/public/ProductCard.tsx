@@ -64,7 +64,7 @@ export function ProductCard({ product }: ProductCardProps) {
       style={{ borderTopColor: accent }}
       className="group motion-reduce:hover:transform-none block overflow-hidden rounded-xl border border-[#E8E8E4] border-t-4 bg-white motion-reduce:hover:shadow-none"
     >
-      <div className="relative h-52 bg-[#F5F0E8]">
+      <div className="relative h-40 bg-[#F5F0E8] sm:h-52">
         {imgUrl ? (
           <Image
             src={imgUrl}
@@ -91,7 +91,7 @@ export function ProductCard({ product }: ProductCardProps) {
       </div>
       <div className="p-5">
         <p
-          className="mb-1 font-sans text-[10px] font-medium uppercase tracking-wide"
+          className="mb-1 font-sans text-sm font-medium uppercase tracking-wide sm:text-[10px]"
           style={{ color: accent }}
         >
           {categoryLabel(product.category)}

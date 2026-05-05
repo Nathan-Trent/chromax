@@ -1,7 +1,7 @@
 export function ProductGridSkeleton() {
   return (
     <section className="bg-[#F5F0E8] py-12">
-      <div className="mx-auto max-w-[1280px] px-6">
+      <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
             <div

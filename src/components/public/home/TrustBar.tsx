@@ -15,7 +15,7 @@ export function TrustBar({ stats }: TrustBarProps) {
   const four = stats.slice(0, 4);
   return (
     <section className="bg-[#E8A020] py-12">
-      <div className="mx-auto max-w-[1280px] px-6">
+      <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 gap-y-10 md:grid-cols-4 md:gap-y-0">
           {four.map((s, i) => (
             <div

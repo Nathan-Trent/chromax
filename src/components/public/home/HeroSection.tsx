@@ -19,7 +19,7 @@ export type HeroSectionProps = {
 };
 
 const primaryBtnClass =
-  "inline-flex w-fit items-center justify-center whitespace-nowrap rounded-lg bg-[#E8A020] px-8 py-3 font-sans text-[14px] font-medium text-[#1a1a2e] transition duration-150 ease-out hover:bg-[#D49215] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-navy)] motion-reduce:transition-none";
+  "inline-flex items-center justify-center whitespace-nowrap rounded-lg bg-[#E8A020] px-8 py-3 font-sans text-sm font-medium text-[#1a1a2e] transition duration-150 ease-out hover:bg-[#D49215] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-navy)] motion-reduce:transition-none sm:text-[14px]";
 
 const BLOBS: {
   color: string;
@@ -134,7 +134,7 @@ export function HeroSection({ content }: HeroSectionProps) {
         {BLOBS.map((b, i) => (
           <div
             key={i}
-            className="absolute rounded-full motion-reduce:animate-none"
+            className={`absolute rounded-full opacity-[0.22] motion-reduce:animate-none md:opacity-[0.38]`}
             style={{
               top: b.top,
               left: b.left,
@@ -143,7 +143,6 @@ export function HeroSection({ content }: HeroSectionProps) {
               height: b.size,
               background: b.color,
               filter: "blur(60px)",
-              opacity: 0.38,
               animationName: b.anim,
               animationDuration: b.duration,
               animationTimingFunction: "ease-in-out",
@@ -154,19 +153,19 @@ export function HeroSection({ content }: HeroSectionProps) {
         ))}
       </div>
 
-      <div className="relative z-[1] mx-auto grid min-h-screen max-w-[1280px] grid-cols-1 items-center gap-10 px-6 py-24 lg:grid-cols-2 lg:gap-12 lg:py-0">
+      <div className="relative z-[1] mx-auto grid min-h-screen max-w-[1280px] grid-cols-1 items-center gap-10 px-4 py-24 sm:px-6 lg:grid-cols-2 lg:gap-12 lg:px-8 lg:py-0">
         {/* LEFT: badge → H1 → subtext → buttons → trust row only */}
         <div className="min-w-0">
           <div
             className="hero-word mb-6 motion-reduce:opacity-100"
             style={{ animationDelay: "0ms" }}
           >
-            <p className="inline-flex rounded-md border border-[#E8A020] px-3 py-1.5 font-sans text-[11px] font-medium uppercase tracking-[0.2em] text-[#E8A020]">
+            <p className="inline-flex rounded-md border border-[#E8A020] px-3 py-1.5 font-sans text-sm font-medium uppercase tracking-[0.12em] text-[#E8A020] sm:text-[11px] sm:tracking-[0.2em]">
               {content.hero_badge}
             </p>
           </div>
 
-          <h1 className="font-[family-name:var(--font-fraunces)] text-6xl leading-[1.05] font-semibold tracking-tight text-white md:text-7xl lg:text-8xl">
+          <h1 className="font-[family-name:var(--font-fraunces)] text-4xl leading-[1.08] font-semibold tracking-tight text-white sm:text-5xl md:text-7xl lg:text-8xl">
             {words.map((w, i) => (
               <span
                 key={`${w}-${i}`}
@@ -189,13 +188,16 @@ export function HeroSection({ content }: HeroSectionProps) {
             className="hero-word mt-8 motion-reduce:opacity-100"
             style={{ animationDelay: "600ms" }}
           >
-            <div className="flex flex-row flex-wrap items-center gap-6">
-              <Link href="/products" className={primaryBtnClass}>
+            <div className="flex w-full max-w-lg flex-col gap-3 sm:max-w-none sm:flex-row sm:flex-wrap sm:items-center sm:gap-6">
+              <Link
+                href="/products"
+                className={`${primaryBtnClass} w-full min-h-11 justify-center sm:w-auto sm:min-h-0`}
+              >
                 {content.hero_cta_primary}
               </Link>
               <Link
                 href="/contact"
-                className="inline-flex w-fit items-center justify-center whitespace-nowrap rounded-lg border-2 border-white/40 bg-white/5 px-8 py-3 font-sans text-[14px] font-medium text-white transition duration-150 ease-out hover:border-white/70 hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#E8A020] motion-reduce:transition-none"
+                className="inline-flex w-full min-h-11 items-center justify-center whitespace-nowrap rounded-lg border-2 border-white/40 bg-white/5 px-8 py-3 font-sans text-sm font-medium text-white transition duration-150 ease-out hover:border-white/70 hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#E8A020] motion-reduce:transition-none sm:w-auto sm:min-h-0 sm:text-[14px]"
               >
                 {content.hero_cta_secondary}
               </Link>
@@ -207,16 +209,16 @@ export function HeroSection({ content }: HeroSectionProps) {
             style={{ animationDelay: "800ms" }}
             aria-label="Trust signals"
           >
-            <div className="flex flex-row flex-wrap items-center gap-x-6 gap-y-2">
+            <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:flex sm:flex-row sm:flex-wrap sm:gap-x-6">
               {trustItems.map((item, i) => (
-                <div key={`${item}-${i}`} className="flex items-center gap-2 whitespace-nowrap">
+                <div key={`${item}-${i}`} className="flex min-w-0 items-center gap-2">
                   <span
                     className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#E8A020]/20"
                     aria-hidden
                   >
-                    <span className="font-sans text-[10px] font-bold text-[#E8A020]">✓</span>
+                    <span className="font-sans text-sm font-bold text-[#E8A020]">✓</span>
                   </span>
-                  <span className="font-sans text-xs font-medium uppercase tracking-widest text-white/50">
+                  <span className="min-w-0 font-sans text-sm font-medium uppercase tracking-wide text-white/55 sm:tracking-widest">
                     {item}
                   </span>
                 </div>

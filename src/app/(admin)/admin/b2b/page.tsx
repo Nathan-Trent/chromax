@@ -135,7 +135,7 @@ export default async function AdminB2BPage({ searchParams }: { searchParams: Pro
   const [offers, stats] = await Promise.all([getAdminB2bOffers(filters), getB2bAdminStats()]);
 
   return (
-    <div className="p-6 md:p-8">
+    <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
       <div className="mb-6">
         <h1 className="font-sans text-2xl font-semibold text-[#1a1a2e]">B2B Offers</h1>
         <p className="mt-1 font-sans text-sm text-[#888888]">
@@ -143,7 +143,7 @@ export default async function AdminB2BPage({ searchParams }: { searchParams: Pro
         </p>
       </div>
 
-      <div className="mb-8 grid grid-cols-2 gap-3 md:grid-cols-4">
+      <div className="mb-8 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-4">
         <div className="rounded-xl border border-[#E8E8E4] bg-white p-4">
           <p className="font-sans text-[11px] font-medium uppercase tracking-wide text-[#888]">
             Pending offers
@@ -178,8 +178,9 @@ export default async function AdminB2BPage({ searchParams }: { searchParams: Pro
         <B2BAdminFilters />
       </Suspense>
 
-      <div className="overflow-x-auto rounded-xl border border-[#E8E8E4] bg-white">
-        <Table>
+      <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+        <div className="overflow-x-auto rounded-xl border border-[#E8E8E4] bg-white">
+          <Table className="min-w-[640px]">
           <Table.Head>
             <Table.Row>
               <Table.HeadCell>Reference</Table.HeadCell>
@@ -246,7 +247,8 @@ export default async function AdminB2BPage({ searchParams }: { searchParams: Pro
               );
             })}
           </Table.Body>
-        </Table>
+          </Table>
+        </div>
       </div>
 
       {offers.length === 0 ? (

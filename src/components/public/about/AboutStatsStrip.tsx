@@ -77,7 +77,7 @@ export function AboutStatsStrip() {
 
   return (
     <section className="bg-[#E8A020] py-12" ref={containerRef}>
-      <div className="mx-auto max-w-[1280px] px-6">
+      <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 gap-8 md:grid-cols-4 md:gap-4">
           {STATS.map((s, i) => (
             <div

@@ -171,8 +171,10 @@ export function ProjectForm({ project, mode }: ProjectFormProps) {
             value={sector}
             onChange={(e) => setSector(e.target.value as ProjectSector)}
           />
-          <Input label="Client name" value={clientName} onChange={(e) => setClientName(e.target.value)} />
-          <Input label="Location" value={location} onChange={(e) => setLocation(e.target.value)} />
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
+            <Input label="Client name" value={clientName} onChange={(e) => setClientName(e.target.value)} />
+            <Input label="Location" value={location} onChange={(e) => setLocation(e.target.value)} />
+          </div>
           <div>
             <label className="mb-1.5 block font-sans text-[13px] font-medium text-[#333]">
               Short description <span className="font-normal text-[#888]">{shortDesc.length}/200</span>
@@ -206,8 +208,14 @@ export function ProjectForm({ project, mode }: ProjectFormProps) {
         </div>
       </section>
 
-      <div className="fixed bottom-0 left-0 right-0 z-30 flex justify-end border-t border-[#E8E8E4] bg-white p-4 lg:left-[240px]">
-        <Button type="button" loading={loading} disabled={loading} onClick={() => void submit()}>
+      <div className="fixed bottom-0 left-0 right-0 z-30 flex flex-col gap-2 border-t border-[#E8E8E4] bg-white p-4 sm:flex-row sm:justify-end lg:left-[240px]">
+        <Button
+          type="button"
+          loading={loading}
+          disabled={loading}
+          className="min-h-11 w-full justify-center sm:w-auto"
+          onClick={() => void submit()}
+        >
           {mode === "create" ? "Create project" : "Save changes"}
         </Button>
       </div>

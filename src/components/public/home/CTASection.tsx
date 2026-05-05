@@ -21,7 +21,7 @@ export function CTASection({ content }: CTASectionProps) {
           filter: "blur(24px)",
         }}
       />
-      <div className="relative z-[1] mx-auto max-w-[1280px] px-6 text-center">
+      <div className="relative z-[1] mx-auto max-w-[1280px] px-4 text-center sm:px-6 lg:px-8">
         <h2 className="font-[family-name:var(--font-fraunces)] text-5xl font-semibold text-[#1a1a2e]">
           {content.cta_heading}
         </h2>

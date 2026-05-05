@@ -37,7 +37,7 @@ export default function CartPage() {
     return (
       <>
         <section className="bg-[#1a1a2e] py-12">
-          <div className="mx-auto max-w-[1280px] px-6 text-center">
+          <div className="mx-auto max-w-[1280px] px-4 text-center sm:px-6 lg:px-8">
             <h1 className="font-[family-name:var(--font-fraunces)] text-4xl font-semibold text-white">
               Your cart is empty
             </h1>
@@ -46,7 +46,7 @@ export default function CartPage() {
             </p>
           </div>
         </section>
-        <div className="flex flex-col items-center bg-[#F5F0E8] px-6 py-24">
+        <div className="flex flex-col items-center bg-[#F5F0E8] px-4 py-24 sm:px-6 lg:px-8">
           <svg
             className="mb-6 h-24 w-24 text-white/20"
             width="96"
@@ -81,8 +81,8 @@ export default function CartPage() {
     <>
       <PageHeader badge="Cart" heading="Your cart" subtext="Review quantities before checkout — prices update with your currency preference." />
 
-      <div className="bg-[#F5F0E8] py-12">
-        <div className="mx-auto max-w-[1280px] px-6">
+      <div className="bg-[#F5F0E8] py-10 sm:py-12">
+        <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 gap-10 lg:grid-cols-12">
             <div className="lg:col-span-8">
               {items.map((item) => (
@@ -160,7 +160,7 @@ function CartLine({
 
   return (
     <div
-      className="mb-4 flex gap-4 rounded-xl border border-[#E8E8E4] bg-white p-4 shadow-sm transition duration-200 hover:shadow-md motion-reduce:transition-none"
+      className="mb-4 flex flex-col gap-4 rounded-xl border border-[#E8E8E4] bg-white p-4 shadow-sm transition duration-200 hover:shadow-md motion-reduce:transition-none sm:flex-row sm:items-start"
       style={
         accent
           ? { borderLeftWidth: 4, borderLeftColor: accent, borderLeftStyle: "solid" }
@@ -176,41 +176,45 @@ function CartLine({
       </div>
       <div className="min-w-0 flex-1">
         <p className="text-[15px] font-semibold text-[#1a1a2e]">{item.name}</p>
-        {item.variant ? <p className="text-xs text-[#888888]">Colour: {item.variant}</p> : null}
+        {item.variant ? (
+          <p className="text-sm text-[#888888]">Colour: {item.variant}</p>
+        ) : null}
         <p className="mt-1 font-sans text-sm text-[#555555]">
           {formatCartPrice(unit, currency)} each
         </p>
       </div>
-      <div className="flex shrink-0 flex-col items-end">
-        <div className="flex items-center gap-2">
+      <div className="flex shrink-0 flex-col gap-3 sm:items-end">
+        <div className="flex flex-wrap items-center gap-4 sm:flex-nowrap sm:justify-end sm:gap-2">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              disabled={!canDecrement}
+              onClick={() => onChangeQty(item.quantity - 1)}
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-[#E0DED4] font-sans text-[15px] text-[#333333] transition duration-150 hover:border-[#E8A020] focus-visible:outline focus-visible:ring-2 focus-visible:ring-[#E8A020] disabled:cursor-not-allowed disabled:opacity-40 motion-reduce:transition-none sm:h-9 sm:w-9 sm:text-[13px]"
+              aria-label="Decrease quantity"
+            >
+              −
+            </button>
+            <span className="min-w-[1.75rem] text-center font-sans text-sm font-medium text-[#E8A020] sm:text-[13px]">
+              {item.quantity}
+            </span>
+            <button
+              type="button"
+              onClick={() => onChangeQty(item.quantity + 1)}
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-[#E0DED4] font-sans text-[15px] text-[#333333] transition duration-150 hover:border-[#E8A020] focus-visible:outline focus-visible:ring-2 focus-visible:ring-[#E8A020] motion-reduce:transition-none sm:h-9 sm:w-9 sm:text-[13px]"
+              aria-label="Increase quantity"
+            >
+              +
+            </button>
+          </div>
           <button
             type="button"
-            disabled={!canDecrement}
-            onClick={() => onChangeQty(item.quantity - 1)}
-            className="flex h-7 w-7 items-center justify-center rounded-full border border-[#E0DED4] font-sans text-[13px] text-[#333333] transition duration-150 hover:border-[#E8A020] focus-visible:outline focus-visible:ring-2 focus-visible:ring-[#E8A020] disabled:cursor-not-allowed disabled:opacity-40 motion-reduce:transition-none"
-            aria-label="Decrease quantity"
+            onClick={onRemove}
+            className="min-h-11 shrink-0 self-start rounded px-3 py-2 font-sans text-sm font-medium text-[#888888] transition duration-150 hover:text-[#993C1D] motion-reduce:transition-none sm:min-h-0 sm:p-0 sm:text-xs sm:font-normal"
           >
-            −
-          </button>
-          <span className="min-w-[1.5rem] text-center font-sans text-[13px] font-medium text-[#E8A020]">
-            {item.quantity}
-          </span>
-          <button
-            type="button"
-            onClick={() => onChangeQty(item.quantity + 1)}
-            className="flex h-7 w-7 items-center justify-center rounded-full border border-[#E0DED4] font-sans text-[13px] text-[#333333] transition duration-150 hover:border-[#E8A020] focus-visible:outline focus-visible:ring-2 focus-visible:ring-[#E8A020] motion-reduce:transition-none"
-            aria-label="Increase quantity"
-          >
-            +
+            Remove
           </button>
         </div>
-        <button
-          type="button"
-          onClick={onRemove}
-          className="mt-2 font-sans text-xs text-[#888888] transition duration-150 hover:text-[#993C1D] motion-reduce:transition-none"
-        >
-          Remove
-        </button>
       </div>
     </div>
   );

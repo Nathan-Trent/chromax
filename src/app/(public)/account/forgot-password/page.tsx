@@ -36,7 +36,7 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="relative -mt-16 min-h-[calc(100vh-4rem)] bg-[#1a1a2e] px-4 pb-16 pt-[calc(4rem+10vh)]">
+    <div className="relative -mt-16 min-h-[calc(100vh-4rem)] bg-[#1a1a2e] px-4 pb-16 pt-[calc(4rem+10vh)] sm:px-6 lg:px-8">
       <div className="mx-auto w-full max-w-md rounded-xl bg-white p-8 shadow-lg">
         <div className="flex flex-col items-center">
           <div className="h-14 w-14">

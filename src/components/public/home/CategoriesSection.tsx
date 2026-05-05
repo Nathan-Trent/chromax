@@ -112,7 +112,7 @@ function CategoryCard({
         t.style.backgroundColor = cat.lightColor;
         t.style.boxShadow = `0 20px 40px ${cat.color}33`;
       }}
-      className="reveal-up group flex h-full min-h-[200px] w-full flex-col items-center rounded-xl border border-[#E8E8E4] bg-white p-6 text-center transition-[transform,box-shadow,border-color,background-color] duration-200 ease-out hover:-translate-y-2 hover:scale-[1.02] hover:shadow-lg motion-reduce:transform-none motion-reduce:transition-none lg:hover:translate-y-0 lg:hover:scale-100 lg:hover:shadow-none"
+      className="reveal-up group flex h-full min-h-[200px] w-full flex-col items-center rounded-xl border border-[#E8E8E4] bg-white p-4 text-center transition-[transform,box-shadow,border-color,background-color] duration-200 ease-out hover:-translate-y-2 hover:scale-[1.02] hover:shadow-lg motion-reduce:transform-none motion-reduce:transition-none sm:p-6 lg:hover:translate-y-0 lg:hover:scale-100 lg:hover:shadow-none"
       style={{
         transitionDelay: `${delayMs}ms`,
       }}
@@ -144,10 +144,10 @@ export function CategoriesSection({ label, heading, subtext }: CategoriesSection
   }, []);
 
   return (
-    <section className="bg-[#F5F0E8] py-20">
-      <div className="mx-auto max-w-[1280px] px-6">
+    <section className="bg-[#F5F0E8] py-16 sm:py-20">
+      <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
         <ScrollReveal className="mx-auto mb-12 max-w-3xl text-center">
-          <p className="mb-2 font-sans text-[11px] font-medium uppercase tracking-widest text-[#888888]">
+          <p className="mb-2 font-sans text-sm font-medium uppercase tracking-widest text-[#888888] sm:text-[11px]">
             {label}
           </p>
           <h2 className="font-[family-name:var(--font-fraunces)] text-3xl font-semibold text-[#1a1a2e] md:text-4xl">
@@ -160,9 +160,24 @@ export function CategoriesSection({ label, heading, subtext }: CategoriesSection
           {CATEGORIES.map((cat, i) => (
             <div
               key={cat.id}
-              className="lg:w-[calc(20%-24px)] lg:min-w-[180px]"
+              className={[
+                "lg:w-[calc(20%-24px)] lg:min-w-[180px]",
+                i === CATEGORIES.length - 1 && CATEGORIES.length % 2 === 1
+                  ? "col-span-2 flex justify-center md:col-span-1 md:block"
+                  : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
             >
-              <CategoryCard cat={cat} delayMs={i * 80} tiltEnabled={tilt} />
+              <div
+                className={
+                  i === CATEGORIES.length - 1 && CATEGORIES.length % 2 === 1
+                    ? "w-full max-w-[min(280px,calc(100vw-5rem))] md:max-w-none"
+                    : "w-full"
+                }
+              >
+                <CategoryCard cat={cat} delayMs={i * 80} tiltEnabled={tilt} />
+              </div>
             </div>
           ))}
         </div>

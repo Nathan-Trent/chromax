@@ -77,7 +77,7 @@ export function ProjectsSection({ content, projects }: ProjectsSectionProps) {
 
   return (
     <section className="bg-[#2D2D3E] py-20">
-      <div className="mx-auto max-w-[1280px] px-6">
+      <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
         <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="mb-2 font-sans text-[11px] font-medium uppercase tracking-widest text-white/50">

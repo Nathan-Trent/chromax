@@ -92,7 +92,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
   return (
     <>
       <section className="bg-[#1a1a2e] py-8">
-        <div className="mx-auto max-w-[1280px] px-6">
+        <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
           <nav
             className="font-sans text-sm text-white/50"
             aria-label="Breadcrumb"
@@ -111,7 +111,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
             <span className="text-white/70">{product.name}</span>
           </nav>
           <div
-            className="mt-4 inline-flex rounded-md px-3 py-1 font-sans text-[11px] font-medium uppercase tracking-widest text-white"
+            className="mt-4 inline-flex min-h-[2.75rem] w-full items-center justify-center rounded-md px-3 py-1 font-sans text-sm font-medium uppercase tracking-wider text-white sm:inline-flex sm:min-h-0 sm:w-auto sm:text-[11px] sm:tracking-widest"
             style={{ backgroundColor: accent }}
           >
             {categoryLabel(product.category)}
@@ -119,8 +119,8 @@ export default async function ProductDetailPage({ params }: PageProps) {
         </div>
       </section>
 
-      <div className="bg-[#F5F0E8] py-12">
-        <div className="mx-auto max-w-[1280px] px-6">
+      <div className="bg-[#F5F0E8] py-10 sm:py-12">
+        <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-12">
             <div className="lg:col-span-7">
               <div className="relative overflow-hidden rounded-xl bg-white shadow-sm">
@@ -248,7 +248,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
                 </p>
                 <Link
                   href={`/contact?type=b2b&product_id=${encodeURIComponent(product.id)}&product_slug=${encodeURIComponent(product.slug)}`}
-                  className="mt-4 inline-flex items-center justify-center rounded-lg bg-[#E8A020] px-5 py-2.5 font-sans text-[13px] font-medium text-[#1a1a2e] transition duration-150 hover:bg-[#D49215] motion-reduce:transition-none"
+                  className="mt-4 flex w-full min-h-11 items-center justify-center rounded-lg bg-[#E8A020] px-5 py-2.5 font-sans text-sm font-medium text-[#1a1a2e] transition duration-150 hover:bg-[#D49215] motion-reduce:transition-none sm:inline-flex sm:w-auto sm:min-h-0 sm:text-[13px]"
                 >
                   Make an offer →
                 </Link>

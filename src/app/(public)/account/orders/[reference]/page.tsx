@@ -90,7 +90,7 @@ export default async function AccountOrderDetailPage({
   const currency = order.currency as string;
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10 md:px-6">
+    <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
       <Link href="/account/orders" className="font-sans text-sm font-medium text-[#185FA5] hover:underline">
         ← My orders
       </Link>

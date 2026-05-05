@@ -70,7 +70,7 @@ export default async function AccountOrdersPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10 md:px-6">
+    <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
       <h1 className="font-sans text-2xl font-medium text-[#1a1a2e]">My Orders</h1>
       <p className="mt-1 font-sans text-sm text-[#555]">Your order history with Chromax-MCR</p>
 

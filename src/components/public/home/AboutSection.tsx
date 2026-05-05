@@ -34,7 +34,7 @@ const features = [
 export function AboutSection({ content }: AboutSectionProps) {
   return (
     <section className="bg-[#1a1a2e] py-20">
-      <div className="mx-auto max-w-[1280px] px-6">
+      <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-16 lg:grid-cols-2">
           <ScrollReveal variant="left">
             <p className="mb-4 inline-flex rounded-md border border-[#E8A020] px-3 py-1.5 font-sans text-[11px] font-medium uppercase tracking-[0.2em] text-[#E8A020]">

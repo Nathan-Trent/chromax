@@ -135,7 +135,7 @@ export default async function AdminOrdersPage({
   const page = filters.page ?? 1;
 
   return (
-    <div className="p-6 md:p-8">
+    <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
       <div className="mb-6">
         <h1 className="font-sans text-2xl font-semibold text-[#1a1a2e]">Orders</h1>
         <p className="mt-1 font-sans text-sm text-[#888888]">
@@ -153,8 +153,9 @@ export default async function AdminOrdersPage({
         </div>
       ) : (
         <>
-          <div className="overflow-x-auto rounded-xl border border-[#E8E8E4] bg-white">
-            <Table>
+          <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:overflow-x-auto sm:px-0">
+            <div className="overflow-x-auto rounded-xl border border-[#E8E8E4] bg-white">
+              <Table className="min-w-[640px]">
               <Table.Head>
                 <Table.Row>
                   <Table.HeadCell>Reference</Table.HeadCell>
@@ -214,7 +215,8 @@ export default async function AdminOrdersPage({
                   );
                 })}
               </Table.Body>
-            </Table>
+              </Table>
+            </div>
           </div>
           {totalPages > 1 ? (
             <div className="mt-8 flex flex-wrap items-center justify-center gap-4">

@@ -98,7 +98,7 @@ export function ColourLabCTASection({ content, swatchColours }: ColourLabCTASect
         ))}
       </div>
 
-      <div className="relative z-[1] mx-auto max-w-[1280px] px-6">
+      <div className="relative z-[1] mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 items-center gap-16 lg:grid-cols-2">
           <ScrollReveal>
             <p className="mb-2 font-sans text-[11px] font-medium uppercase tracking-widest text-white/60">

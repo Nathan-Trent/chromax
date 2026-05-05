@@ -422,7 +422,7 @@ export function AdminShell({ user, roles, children }: AdminShellProps) {
         <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#E8E8E4] bg-[#F5F0E8] px-4 lg:hidden">
           <button
             type="button"
-            className="rounded-lg p-2 text-[#1a1a2e] hover:bg-black/5"
+            className="min-h-11 min-w-11 rounded-lg p-2 text-[#1a1a2e] hover:bg-black/5"
             aria-label="Open menu"
             onClick={() => setMobileNavOpen(true)}
           >
@@ -444,7 +444,7 @@ export function AdminShell({ user, roles, children }: AdminShellProps) {
           </div>
           <NotificationBell userId={user.id} variant="mobile" />
         </header>
-        <div className="flex-1 overflow-y-auto">{children}</div>
+        <div className="flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8">{children}</div>
       </div>
     </div>
   );

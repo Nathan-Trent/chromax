@@ -74,11 +74,11 @@ export default async function AboutPage() {
             aria-hidden
           />
         </div>
-        <div className="relative z-[1] mx-auto max-w-[1280px] px-6">
-          <p className="font-sans text-[11px] font-medium uppercase tracking-widest text-[#E8A020]">
+        <div className="relative z-[1] mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
+          <p className="font-sans text-sm font-medium uppercase tracking-wider text-[#E8A020] sm:text-[11px] sm:tracking-widest">
             About us
           </p>
-          <h1 className="font-[family-name:var(--font-fraunces)] mt-4 max-w-3xl text-5xl font-semibold tracking-tight text-white md:text-6xl">
+          <h1 className="font-[family-name:var(--font-fraunces)] mt-4 max-w-3xl text-4xl font-semibold tracking-tight text-white sm:text-5xl md:text-6xl">
             Made in Lagos. Trusted worldwide.
           </h1>
           <p className="mt-4 max-w-2xl font-sans text-lg text-white/60">
@@ -91,7 +91,7 @@ export default async function AboutPage() {
       <AboutStatsStrip />
 
       <section className="bg-[#F5F0E8] py-20">
-        <div className="mx-auto grid max-w-[1280px] grid-cols-1 gap-12 px-6 lg:grid-cols-2 lg:gap-16">
+        <div className="mx-auto grid max-w-[1280px] grid-cols-1 gap-12 px-4 sm:px-6 lg:grid-cols-2 lg:gap-16 lg:px-8">
           <div>
             <h2 className="font-[family-name:var(--font-fraunces)] mb-8 text-3xl font-semibold text-[#1a1a2e]">
               Our story
@@ -119,7 +119,7 @@ export default async function AboutPage() {
       </section>
 
       <section className="bg-white py-20">
-        <div className="mx-auto max-w-[1280px] px-6">
+        <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
           <h2 className="font-[family-name:var(--font-fraunces)] mb-14 text-center text-3xl font-semibold text-[#1a1a2e] md:text-4xl">
             How we manufacture
           </h2>
@@ -164,7 +164,7 @@ export default async function AboutPage() {
       </section>
 
       <section className="bg-[#1a1a2e] py-20">
-        <div className="mx-auto max-w-[1280px] px-6 text-center">
+        <div className="mx-auto max-w-[1280px] px-4 text-center sm:px-6 lg:px-8">
           <h2 className="font-[family-name:var(--font-fraunces)] text-4xl font-semibold text-white">
             Ready to work with us?
           </h2>

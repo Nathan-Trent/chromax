@@ -9,7 +9,7 @@ export default function PublicLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className="flex min-h-screen w-full flex-col">
+    <div className="flex min-h-screen w-full min-w-0 flex-col overflow-x-hidden">
       <SessionExpiryWatcher />
       <Nav />
       <main className="flex-1 w-full pt-16">

@@ -8,9 +8,23 @@ export const metadata: Metadata = {
   description:
     "Premium paint manufacturer based in Lagos, Nigeria. Industrial, marine, automotive and architectural coatings. Export to UK, USA and Ukraine.",
   icons: {
-    icon: "/images/chromax-logo.png",
-    shortcut: "/images/chromax-logo.png",
-    apple: "/images/chromax-logo.png",
+    icon: [
+      {
+        url: "/favicon.ico",
+        sizes: "32x32",
+      },
+      {
+        url: "/images/chromax-logo.png",
+        type: "image/png",
+        sizes: "192x192",
+      },
+    ],
+    apple: {
+      url: "/images/chromax-logo.png",
+      sizes: "180x180",
+      type: "image/png",
+    },
+    shortcut: "/favicon.ico",
   },
 };
 
@@ -21,7 +35,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${inter.className} ${fraunces.variable}`}>
-      <body className={inter.className} suppressHydrationWarning>
+      <body className={`${inter.className} overflow-x-hidden`} suppressHydrationWarning>
         <GoogleReCaptchaProviderWrapper>{children}</GoogleReCaptchaProviderWrapper>
       </body>
     </html>

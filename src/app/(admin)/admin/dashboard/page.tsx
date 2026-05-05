@@ -197,7 +197,7 @@ export default async function DashboardPage() {
   ]);
 
   return (
-    <div className="p-6 md:p-8">
+    <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
       <h1 className="font-sans text-2xl font-semibold text-[#1a1a2e]">Dashboard</h1>
       <p className="mt-1 font-sans text-2xl font-semibold text-[#1a1a2e]">
         {greetingPrefix()}, {emailFirst}
@@ -214,7 +214,7 @@ export default async function DashboardPage() {
       ) : null}
 
       {!missionOnly && showKpis ? (
-        <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-4">
+        <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
           <div className="rounded-xl border border-[#E8E8E4] bg-white p-5">
             <p className="font-sans text-[11px] font-medium uppercase tracking-wide text-[#888888]">
               New orders today
@@ -255,8 +255,9 @@ export default async function DashboardPage() {
       {canOrdersView && recentOrders.data && recentOrders.data.length > 0 ? (
         <div className="mt-10">
           <h2 className="font-sans text-lg font-medium text-[#1a1a2e]">Recent orders</h2>
-          <div className="mt-4 overflow-x-auto rounded-xl border border-[#E8E8E4] bg-white">
-            <Table>
+          <div className="mt-4 -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+            <div className="overflow-x-auto rounded-xl border border-[#E8E8E4] bg-white">
+              <Table className="min-w-[560px]">
               <Table.Head>
                 <Table.Row>
                   <Table.HeadCell>Reference</Table.HeadCell>
@@ -289,6 +290,7 @@ export default async function DashboardPage() {
                 ))}
               </Table.Body>
             </Table>
+            </div>
           </div>
         </div>
       ) : null}

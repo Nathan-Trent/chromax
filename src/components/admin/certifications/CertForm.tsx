@@ -146,8 +146,10 @@ export function CertForm({ cert, mode, liveProducts }: CertFormProps) {
             onChange={(e) => setCertType(e.target.value as CertificationType)}
           />
           <Input label="Issuing body" value={issuing} onChange={(e) => setIssuing(e.target.value)} />
-          <Input label="Issue date" type="date" value={issueDate} onChange={(e) => setIssueDate(e.target.value)} />
-          <Input label="Expiry date" type="date" value={expiryDate} onChange={(e) => setExpiryDate(e.target.value)} />
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
+            <Input label="Issue date" type="date" value={issueDate} onChange={(e) => setIssueDate(e.target.value)} />
+            <Input label="Expiry date" type="date" value={expiryDate} onChange={(e) => setExpiryDate(e.target.value)} />
+          </div>
           <Input label="Document URL" value={docUrl} onChange={(e) => setDocUrl(e.target.value)} />
           <Select
             label="Linked product"
@@ -170,8 +172,14 @@ export function CertForm({ cert, mode, liveProducts }: CertFormProps) {
         </div>
       </section>
 
-      <div className="fixed bottom-0 left-0 right-0 z-30 flex justify-end border-t border-[#E8E8E4] bg-white p-4 lg:left-[240px]">
-        <Button type="button" loading={loading} disabled={loading} onClick={() => void submit()}>
+      <div className="fixed bottom-0 left-0 right-0 z-30 flex flex-col gap-2 border-t border-[#E8E8E4] bg-white p-4 sm:flex-row sm:justify-end lg:left-[240px]">
+        <Button
+          type="button"
+          loading={loading}
+          disabled={loading}
+          className="min-h-11 w-full justify-center sm:w-auto"
+          onClick={() => void submit()}
+        >
           {mode === "create" ? "Add certification" : "Save changes"}
         </Button>
       </div>

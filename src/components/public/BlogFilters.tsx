@@ -33,7 +33,7 @@ export function BlogFilters() {
 
   return (
     <div className="sticky top-16 z-30 border-b border-[#E0DED4] bg-white">
-      <div className="mx-auto max-w-[1280px] px-6 py-3">
+      <div className="mx-auto max-w-[1280px] px-4 py-3 sm:px-6 lg:px-8">
         <div className="flex flex-row gap-2 overflow-x-auto pb-1">
           {FILTERS.map(({ label, value }) => {
             const active =

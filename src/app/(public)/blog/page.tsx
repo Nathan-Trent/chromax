@@ -23,7 +23,7 @@ async function BlogResults({ params }: { params: SearchProps }) {
   if (posts.length === 0) {
     return (
       <>
-        <div className="mx-auto max-w-[1280px] px-6 py-16 text-center">
+        <div className="mx-auto max-w-[1280px] px-4 py-12 text-center sm:px-6 sm:py-16 lg:px-8">
           <p className="font-[family-name:var(--font-fraunces)] text-2xl font-semibold text-[#1a1a2e]">
             No posts yet
           </p>
@@ -35,7 +35,7 @@ async function BlogResults({ params }: { params: SearchProps }) {
             Browse products
           </Link>
         </div>
-        <div className="mx-auto max-w-[1280px] px-6 pb-16">
+        <div className="mx-auto max-w-[1280px] px-4 pb-12 sm:px-6 sm:pb-16 lg:px-8">
           <BlogGridSkeleton />
         </div>
       </>
@@ -43,7 +43,7 @@ async function BlogResults({ params }: { params: SearchProps }) {
   }
 
   return (
-    <div className="mx-auto max-w-[1280px] px-6 py-16">
+    <div className="mx-auto max-w-[1280px] px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
       <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
         {posts.map((post, i) => (
           <ScrollReveal key={post.id} style={{ transitionDelay: `${(i % 6) * 70}ms` }}>
@@ -81,7 +81,7 @@ export default async function BlogPage({
       <section className="min-h-[40vh] bg-[#F5F0E8]">
         <Suspense
           fallback={
-            <div className="mx-auto max-w-[1280px] px-6 py-16">
+            <div className="mx-auto max-w-[1280px] px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
               <BlogGridSkeleton />
             </div>
           }

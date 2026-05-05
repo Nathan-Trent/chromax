@@ -173,7 +173,7 @@ export default function CheckoutPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-[#F5F0E8] px-6 py-12">
+      <div className="min-h-screen bg-[#F5F0E8] px-4 py-10 sm:px-6 lg:py-12">
         <div className="mx-auto max-w-lg rounded-xl bg-white p-10 text-center shadow-sm">
           <span
             className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#1D9E75]/15 text-[#1D9E75]"
@@ -218,16 +218,26 @@ export default function CheckoutPage() {
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
       <section className="bg-[#1a1a2e] py-8">
-        <div className="mx-auto max-w-[1280px] px-6">
-          <h1 className="font-[family-name:var(--font-fraunces)] text-4xl font-semibold text-white">
+        <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
+          <h1 className="font-[family-name:var(--font-fraunces)] text-3xl font-semibold text-white sm:text-4xl">
             Checkout
           </h1>
-          <div className="mt-8 flex w-full max-w-xl items-center">
+          <div
+            className="mt-8 flex w-full max-w-xl items-center"
+            aria-label="Checkout progress"
+          >
             {([1, 2, 3] as const).map((n, idx) => (
               <Fragment key={n}>
                 <div className="flex flex-col items-center gap-2">
                   <div
-                    className={`flex h-10 w-10 items-center justify-center rounded-full border-2 font-sans text-sm font-semibold transition-colors duration-150 motion-reduce:transition-none ${
+                    aria-label={
+                      n === 1
+                        ? "Step 1 of 3 — Contact"
+                        : n === 2
+                          ? "Step 2 of 3 — Shipping"
+                          : "Step 3 of 3 — Payment"
+                    }
+                    className={`flex h-11 w-11 items-center justify-center rounded-full border-2 font-sans text-sm font-semibold transition-colors duration-150 motion-reduce:transition-none ${
                       checkoutStep > n
                         ? "border-[#E8A020] bg-[#E8A020] text-[#1a1a2e]"
                         : checkoutStep === n
@@ -237,7 +247,7 @@ export default function CheckoutPage() {
                   >
                     {n}
                   </div>
-                  <span className="hidden font-sans text-[10px] uppercase tracking-wider text-white/50 sm:block">
+                  <span className="hidden font-sans text-xs uppercase tracking-wider text-white/50 sm:block sm:text-[10px]">
                     {n === 1 ? "Contact" : n === 2 ? "Shipping" : "Payment"}
                   </span>
                 </div>
@@ -255,9 +265,9 @@ export default function CheckoutPage() {
         </div>
       </section>
 
-      <div className="mx-auto max-w-[1280px] px-6 py-12">
+      <div className="mx-auto max-w-[1280px] px-4 pb-12 pt-8 sm:px-6 lg:px-8 lg:pb-12 lg:pt-12">
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-12">
-          <div className="lg:col-span-7">
+          <div className="lg:col-span-7 lg:order-1">
             <div className={`mb-4 rounded-xl border border-[#E8E8E4] bg-white p-6 ${stepCardClass(1)}`}>
               <h2 className="mb-4 font-sans text-[13px] font-semibold text-[#1a1a2e]">
                 1. Contact details
@@ -386,8 +396,8 @@ export default function CheckoutPage() {
             </div>
           </div>
 
-          <div className="lg:col-span-5">
-            <div className="sticky top-24 overflow-hidden rounded-xl border border-[#E8E8E4] border-t-4 border-t-[#E8A020] bg-white p-6 shadow-sm">
+          <div className="lg:col-span-5 lg:order-2">
+            <div className="relative top-0 overflow-hidden rounded-xl border border-[#E8E8E4] border-t-4 border-t-[#E8A020] bg-white p-6 shadow-sm lg:sticky lg:top-24">
               <h2 className="mb-4 font-sans text-[15px] font-semibold text-[#1a1a2e]">
                 Order summary
               </h2>

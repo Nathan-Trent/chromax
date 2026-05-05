@@ -54,7 +54,7 @@ function LoginForm() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#1a1a2e] px-4 py-8">
+    <div className="flex min-h-screen flex-col bg-[#1a1a2e] px-4 py-8 sm:px-6 lg:px-8">
       <div className="mx-auto mt-[15vh] w-full max-w-sm rounded-xl bg-white p-8 shadow-lg">
         <div className="flex flex-col items-center">
           <Link href="/" className="block">

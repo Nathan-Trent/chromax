@@ -99,7 +99,7 @@ export default function CertificationsPage() {
       />
 
       <div className="bg-[#F5F0E8] py-16">
-        <div className="mx-auto max-w-[1280px] space-y-16 px-6">
+        <div className="mx-auto max-w-[1280px] space-y-16 px-4 sm:px-6 lg:px-8">
           <ScrollReveal>
             <section>
               <h2 className="font-[family-name:var(--font-fraunces)] mb-8 text-2xl font-semibold text-[#1a1a2e]">
@@ -125,7 +125,7 @@ export default function CertificationsPage() {
           </ScrollReveal>
 
           <ScrollReveal>
-            <section className="rounded-2xl bg-white px-6 py-12 md:px-10">
+            <section className="rounded-2xl bg-white px-4 py-12 sm:px-6 md:px-10">
               <h2 className="font-[family-name:var(--font-fraunces)] mb-8 text-2xl font-semibold text-[#1a1a2e]">
                 Export Licences
               </h2>
@@ -179,7 +179,7 @@ export default function CertificationsPage() {
           </ScrollReveal>
 
           <ScrollReveal>
-            <section className="rounded-2xl bg-white px-6 py-12 md:px-10">
+            <section className="rounded-2xl bg-white px-4 py-12 sm:px-6 md:px-10">
               <h2 className="font-[family-name:var(--font-fraunces)] mb-8 text-2xl font-semibold text-[#1a1a2e]">
                 Awards & Accreditations
               </h2>

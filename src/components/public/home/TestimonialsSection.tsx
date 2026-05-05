@@ -45,8 +45,8 @@ export function TestimonialsSection({ content }: TestimonialsSectionProps) {
   );
 
   return (
-    <section className="bg-[#1a1a2e] py-20">
-      <div className="mx-auto max-w-[1280px] px-6">
+    <section className="bg-[#1a1a2e] py-16 sm:py-20">
+      <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-10 md:flex-row md:justify-center md:gap-16 lg:gap-24">
           <div className="text-center md:text-left">
             <div className="font-[family-name:var(--font-fraunces)] text-7xl font-semibold text-[#E8A020]">
@@ -75,7 +75,7 @@ export function TestimonialsSection({ content }: TestimonialsSectionProps) {
           </h2>
         </div>
 
-        <div className="mx-auto mt-10 grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-2">
+        <div className="mx-auto mt-10 grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-2 md:gap-8">
           {cards.map((c, i) => (
             <TestimonialCard key={i} {...c} delayMs={i * 120} />
           ))}

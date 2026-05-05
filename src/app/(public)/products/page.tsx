@@ -55,8 +55,8 @@ async function ProductCatalogueResults({ params }: { params: SearchProps }) {
   if (products.length === 0) {
     return (
       <section className="bg-[#F5F0E8] py-16">
-        <div className="mx-auto max-w-[1280px] px-6">
-          <div className="rounded-xl border border-[#E8E8E4] bg-white px-6 py-16 text-center">
+        <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
+          <div className="rounded-xl border border-[#E8E8E4] bg-white px-4 py-12 text-center sm:px-6 sm:py-16">
             <p className="font-[family-name:var(--font-fraunces)] text-2xl font-semibold text-[#1a1a2e]">
               No products found
             </p>
@@ -81,7 +81,7 @@ async function ProductCatalogueResults({ params }: { params: SearchProps }) {
 
   return (
     <section className="bg-[#F5F0E8] py-12">
-      <div className="mx-auto max-w-[1280px] px-6">
+      <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {products.map((p, i) => (
             <ScrollReveal

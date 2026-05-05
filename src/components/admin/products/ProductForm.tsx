@@ -397,28 +397,47 @@ export function ProductForm({ product, mode }: ProductFormProps) {
         ) : null}
       </section>
 
-      <div className="fixed bottom-0 left-0 right-0 z-30 flex flex-wrap items-center justify-end gap-3 border-t border-[#E8E8E4] bg-white p-4 lg:left-[240px]">
+      <div className="fixed bottom-0 left-0 right-0 z-30 flex flex-col gap-2 border-t border-[#E8E8E4] bg-white p-4 sm:flex-row sm:flex-wrap sm:justify-end lg:left-[240px]">
         <Button
           type="button"
           variant="outline"
           loading={loading}
           disabled={loading}
+          className="min-h-11 w-full justify-center sm:w-auto"
           onClick={() => void submit({ status: "draft" })}
         >
           Save as draft
         </Button>
         {mode === "edit" ? (
-          <Button type="button" loading={loading} disabled={loading} onClick={() => void submit()}>
+          <Button
+            type="button"
+            loading={loading}
+            disabled={loading}
+            className="min-h-11 w-full justify-center sm:w-auto"
+            onClick={() => void submit()}
+          >
             Save changes
           </Button>
         ) : null}
         {mode === "create" && status !== "live" ? (
-          <Button type="button" loading={loading} disabled={loading} onClick={() => void submit()}>
+          <Button
+            type="button"
+            loading={loading}
+            disabled={loading}
+            className="min-h-11 w-full justify-center sm:w-auto"
+            onClick={() => void submit()}
+          >
             Create product
           </Button>
         ) : null}
         {status === "live" ? (
-          <Button type="button" loading={loading} disabled={loading} onClick={() => void submit({ status: "live" })}>
+          <Button
+            type="button"
+            loading={loading}
+            disabled={loading}
+            className="min-h-11 w-full justify-center sm:w-auto"
+            onClick={() => void submit({ status: "live" })}
+          >
             {mode === "create" ? "Publish" : "Publish"}
           </Button>
         ) : null}

@@ -61,7 +61,7 @@ export default async function BlogPostPage({ params }: PageProps) {
   const mins = readingMinutes(post.body_html);
 
   return (
-    <article className="mx-auto max-w-[800px] px-6 py-16">
+    <article className="mx-auto max-w-[800px] px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
       <Link
         href="/blog"
         className="mb-8 inline-block font-sans text-sm text-[#185FA5] hover:underline"

@@ -165,6 +165,20 @@ export function BlogPostForm({ post, mode }: BlogPostFormProps) {
             value={postType}
             onChange={(e) => setPostType(e.target.value as BlogPostType)}
           />
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
+            <Select
+              label="Status"
+              options={STATUS_OPTS.map((o) => ({ value: o.value, label: o.label }))}
+              value={status}
+              onChange={(e) => setStatus(e.target.value as BlogPostStatus)}
+            />
+            <Input
+              label="Published at"
+              type="datetime-local"
+              value={publishedAt}
+              onChange={(e) => setPublishedAt(e.target.value)}
+            />
+          </div>
           <div>
             <label className="mb-1.5 block font-sans text-[13px] font-medium text-[#333]">
               Excerpt <span className="font-normal text-[#888]">{excerpt.length}/200</span>
@@ -188,18 +202,6 @@ export function BlogPostForm({ post, mode }: BlogPostFormProps) {
             value={coverUrl}
             onChange={(e) => setCoverUrl(e.target.value)}
           />
-          <Select
-            label="Status"
-            options={STATUS_OPTS.map((o) => ({ value: o.value, label: o.label }))}
-            value={status}
-            onChange={(e) => setStatus(e.target.value as BlogPostStatus)}
-          />
-          <Input
-            label="Published at"
-            type="datetime-local"
-            value={publishedAt}
-            onChange={(e) => setPublishedAt(e.target.value)}
-          />
           <Input label="SEO title" value={seoTitle} onChange={(e) => setSeoTitle(e.target.value)} />
           <div>
             <label className="mb-1.5 block font-sans text-[13px] font-medium text-[#333]">SEO description</label>
@@ -208,8 +210,14 @@ export function BlogPostForm({ post, mode }: BlogPostFormProps) {
         </div>
       </section>
 
-      <div className="fixed bottom-0 left-0 right-0 z-30 flex justify-end border-t border-[#E8E8E4] bg-white p-4 lg:left-[240px]">
-        <Button type="button" loading={loading} disabled={loading} onClick={() => void submit()}>
+      <div className="fixed bottom-0 left-0 right-0 z-30 flex flex-col gap-2 border-t border-[#E8E8E4] bg-white p-4 sm:flex-row sm:justify-end lg:left-[240px]">
+        <Button
+          type="button"
+          loading={loading}
+          disabled={loading}
+          className="min-h-11 w-full justify-center sm:w-auto"
+          onClick={() => void submit()}
+        >
           {mode === "create" ? "Create post" : "Save changes"}
         </Button>
       </div>

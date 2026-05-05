@@ -22,16 +22,16 @@ export function PageHeader({
     variant === "charcoal" ? "bg-[#2D2D3E]" : "bg-[#1a1a2e]";
 
   return (
-    <section className={`${bg} py-16 ${className}`.trim()}>
-      <div className="mx-auto max-w-[1280px] px-6">
-        <p className="font-sans text-[11px] font-medium uppercase tracking-widest text-[#E8A020]">
+    <section className={`${bg} py-12 sm:py-16 ${className}`.trim()}>
+      <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
+        <p className="font-sans text-sm font-medium uppercase tracking-wider text-[#E8A020] sm:text-[11px] sm:tracking-widest">
           {badge}
         </p>
-        <h1 className="font-[family-name:var(--font-fraunces)] mt-3 text-5xl font-semibold text-white md:text-[3rem] md:leading-tight">
+        <h1 className="font-[family-name:var(--font-fraunces)] mt-3 text-4xl font-semibold text-white sm:text-5xl md:text-[3rem] md:leading-tight">
           {heading}
         </h1>
         {subtext ? (
-          <p className="mt-4 max-w-xl font-sans text-lg text-white/60">
+          <p className="mt-4 max-w-xl font-sans text-base leading-relaxed text-white/70 sm:text-lg sm:text-white/60">
             {subtext}
           </p>
         ) : null}

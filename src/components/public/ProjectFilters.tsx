@@ -61,7 +61,7 @@ export function ProjectFilters({ projects }: ProjectFiltersProps) {
   return (
     <>
       <div className="sticky top-16 z-30 border-b border-[#E0DED4] bg-white">
-        <div className="mx-auto max-w-[1280px] px-6 py-3">
+        <div className="mx-auto max-w-[1280px] px-4 py-3 sm:px-6 lg:px-8">
           <div className="flex flex-row gap-2 overflow-x-auto pb-1">
             {FILTERS.map(({ label, value }) => {
               const isActive =
@@ -82,7 +82,7 @@ export function ProjectFilters({ projects }: ProjectFiltersProps) {
       </div>
 
       <section className="bg-[#F5F0E8] py-16">
-        <div className="mx-auto max-w-[1280px] px-6">
+        <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
             {filtered.map((p, i) => {
               const col = SECTOR_HEX[p.sector];
