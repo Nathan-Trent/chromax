@@ -22,6 +22,7 @@ function money(amount: number, currency: string): string {
 
 function wrapBody(inner: string): string {
   const logoSrc = `${(process.env.NEXT_PUBLIC_APP_URL ?? "").replace(/\/$/, "")}/images/chromax-logo.png`;
+  const year = new Date().getFullYear();
   return `<!DOCTYPE html>
 <html lang="en"><body style="margin:0;padding:0;background:#F5F0E8;font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#555555;line-height:1.7;">
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#F5F0E8;padding:24px 12px;"><tr><td align="center">
@@ -35,7 +36,7 @@ function wrapBody(inner: string): string {
 ${inner}
 </td></tr>
 <tr><td style="padding:16px 24px;background:#1a1a2e;text-align:center;">
-<p style="margin:0;font-size:11px;color:rgba(255,255,255,0.55);line-height:1.6;">Chromax-MCR · Ikotun, Lagos, Nigeria · <a href="mailto:info@chromax-mcr.com" style="color:#E8A020;text-decoration:none;">info@chromax-mcr.com</a></p>
+<p style="margin:0;font-size:11px;color:rgba(255,255,255,0.55);line-height:1.6;">© ${year} Chromax-MCR · Ikotun, Lagos, Nigeria · <a href="mailto:info@chromax-mcr.com" style="color:#E8A020;text-decoration:none;">info@chromax-mcr.com</a></p>
 </td></tr>
 </table>
 </td></tr></table>

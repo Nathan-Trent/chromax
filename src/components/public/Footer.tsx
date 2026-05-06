@@ -93,7 +93,7 @@ export function Footer() {
 
         <div className="mt-10 flex flex-col justify-between gap-4 border-t border-white/10 pt-6 sm:mt-12 sm:flex-row sm:items-center">
           <p className="font-sans text-sm text-[rgba(255,255,255,0.35)] sm:text-[12px]">
-            © 2025 Chromax-MCR. All rights reserved.
+            © {new Date().getFullYear()} Chromax-MCR. All rights reserved.
           </p>
           <p className="font-sans text-sm text-[rgba(255,255,255,0.35)] sm:text-[12px]">
             Made in Lagos · Trusted worldwide
