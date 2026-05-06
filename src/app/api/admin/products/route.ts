@@ -57,7 +57,10 @@ export async function POST(request: Request) {
     min_b2b_price_ngn: null as number | null,
     min_b2b_price_usd: null as number | null,
     min_b2b_price_gbp: null as number | null,
-    erp_product_id: null as string | null,
+    erp_product_id: null as number | null,
+    erp_product_name: null as string | null,
+    erp_linked_at: null as string | null,
+    erp_last_stock_sync: null as string | null,
     created_by: ctx.user.id,
   };
 

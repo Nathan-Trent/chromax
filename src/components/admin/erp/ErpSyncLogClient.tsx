@@ -2,9 +2,20 @@
 
 import { Badge } from "@/components/ui/Badge";
 import { Table } from "@/components/ui/Table";
+import { showConfirm } from "@/components/ui/GlobalAlertDialog";
 import { useCallback, useEffect, useState } from "react";
 
 import { ERPConnectionStatus } from "./ERPConnectionStatus";
+
+export type ErpSyncPendingMeta = {
+  id: string;
+  status: string;
+  auto_applied: boolean;
+  reviewed_at: string | null;
+  event_type: string;
+  field_changed: string | null;
+  current_value?: unknown;
+};
 
 export type ErpSyncLogRow = {
   id: string;
@@ -17,6 +28,7 @@ export type ErpSyncLogRow = {
   attempt_count: number | null;
   error_message: string | null;
   created_at: string;
+  erp_sync_pending?: ErpSyncPendingMeta | null;
 };
 
 export type ErpSyncStats = {
@@ -28,10 +40,12 @@ export type ErpSyncStats = {
 
 type FilterStatus = "all" | "success" | "failed" | "dead_letter";
 type FilterDirection = "all" | "dashboard_to_erp" | "erp_to_dashboard";
+type PendingFilter = "all" | "pending" | "approved" | "auto_applied" | "rejected" | "undone";
 
 type Props = {
   initialRows: ErpSyncLogRow[];
   initialStats: ErpSyncStats;
+  layout?: "standalone" | "embedded";
 };
 
 function chipClass(active: boolean) {
@@ -43,14 +57,18 @@ function chipClass(active: boolean) {
   ].join(" ");
 }
 
-export function ErpSyncLogClient({ initialRows, initialStats }: Props) {
+export function ErpSyncLogClient({ initialRows, initialStats, layout = "standalone" }: Props) {
   const [rows, setRows] = useState<ErpSyncLogRow[]>(initialRows);
   const [stats, setStats] = useState(initialStats);
   const [statusFilter, setStatusFilter] = useState<FilterStatus>("all");
   const [directionFilter, setDirectionFilter] = useState<FilterDirection>("all");
+  const [pendingFilter, setPendingFilter] = useState<PendingFilter>("all");
   const [loading, setLoading] = useState(false);
   const [retryingId, setRetryingId] = useState<string | null>(null);
+  const [undoingId, setUndoingId] = useState<string | null>(null);
   const [showSetupGuide, setShowSetupGuide] = useState(true);
+
+  const embedded = layout === "embedded";
 
   const fetchLog = useCallback(async () => {
     setLoading(true);
@@ -58,6 +76,7 @@ export function ErpSyncLogClient({ initialRows, initialStats }: Props) {
       const p = new URLSearchParams();
       if (statusFilter !== "all") p.set("status", statusFilter);
       if (directionFilter !== "all") p.set("direction", directionFilter);
+      if (pendingFilter !== "all") p.set("pending_status", pendingFilter);
       const res = await fetch(`/api/admin/erp-sync/log?${p.toString()}`, { cache: "no-store" });
       if (!res.ok) return;
       const json = (await res.json()) as {
@@ -68,13 +87,17 @@ export function ErpSyncLogClient({ initialRows, initialStats }: Props) {
     } finally {
       setLoading(false);
     }
-  }, [directionFilter, statusFilter]);
+  }, [directionFilter, pendingFilter, statusFilter]);
 
   useEffect(() => {
     queueMicrotask(() => void fetchLog());
   }, [fetchLog]);
 
   useEffect(() => {
+    if (embedded) {
+      setShowSetupGuide(false);
+      return;
+    }
     queueMicrotask(() => {
       void (async () => {
         try {
@@ -86,7 +109,7 @@ export function ErpSyncLogClient({ initialRows, initialStats }: Props) {
         }
       })();
     });
-  }, []);
+  }, [embedded]);
 
   async function onRetry(id: string) {
     setRetryingId(id);
@@ -95,6 +118,27 @@ export function ErpSyncLogClient({ initialRows, initialStats }: Props) {
       if (res.ok) await fetchLog();
     } finally {
       setRetryingId(null);
+    }
+  }
+
+  async function onUndo(pendingId: string) {
+    const ok = await showConfirm({
+      title: "Undo this sync change?",
+      message: "This will revert the dashboard to the previous value recorded for this sync.",
+      confirmLabel: "Undo",
+      cancelLabel: "Cancel",
+      confirmVariant: "danger",
+      icon: "warning",
+    });
+    if (!ok) return;
+    setUndoingId(pendingId);
+    try {
+      const res = await fetch(`/api/admin/erp-sync/pending/${pendingId}/undo`, {
+        method: "POST",
+      });
+      if (res.ok) await fetchLog();
+    } finally {
+      setUndoingId(null);
     }
   }
 
@@ -115,9 +159,9 @@ export function ErpSyncLogClient({ initialRows, initialStats }: Props) {
 
   return (
     <div className="space-y-6">
-      <ERPConnectionStatus />
+      {!embedded ? <ERPConnectionStatus /> : null}
 
-      {showSetupGuide ? (
+      {!embedded && showSetupGuide ? (
         <div className="mb-6 rounded-xl bg-[#FAEEDA] p-6">
           <h2 className="font-sans text-lg font-medium text-[#633806]">Front Sync module not yet installed</h2>
           <ol className="mt-3 list-decimal space-y-2 pl-5 font-sans text-sm text-[#555555]">
@@ -131,30 +175,32 @@ export function ErpSyncLogClient({ initialRows, initialStats }: Props) {
         </div>
       ) : null}
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {[
-          { label: "Total events", value: String(stats.total) },
-          { label: "Success rate", value: `${stats.successRate}%` },
-          { label: "Failed (incl. dead letter)", value: String(stats.failed) },
-          {
-            label: "Last sync",
-            value: stats.lastSync
-              ? new Date(stats.lastSync).toLocaleString(undefined, {
-                  dateStyle: "medium",
-                  timeStyle: "short",
-                })
-              : "—",
-          },
-        ].map((c) => (
-          <div key={c.label} className="rounded-xl bg-white p-5">
-            <p className="text-[11px] font-medium uppercase tracking-widest text-[#888888]">{c.label}</p>
-            <p className="mt-2 font-sans text-xl font-semibold text-[#1a1a2e]">{c.value}</p>
-          </div>
-        ))}
-      </div>
+      {!embedded ? (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            { label: "Total events", value: String(stats.total) },
+            { label: "Success rate", value: `${stats.successRate}%` },
+            { label: "Failed (incl. dead letter)", value: String(stats.failed) },
+            {
+              label: "Last sync",
+              value: stats.lastSync
+                ? new Date(stats.lastSync).toLocaleString(undefined, {
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                  })
+                : "—",
+            },
+          ].map((c) => (
+            <div key={c.label} className="rounded-xl bg-white p-5">
+              <p className="text-[11px] font-medium uppercase tracking-widest text-[#888888]">{c.label}</p>
+              <p className="mt-2 font-sans text-xl font-semibold text-[#1a1a2e]">{c.value}</p>
+            </div>
+          ))}
+        </div>
+      ) : null}
 
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-        <span className="font-sans text-xs font-medium text-[#888888]">Status</span>
+        <span className="font-sans text-xs font-medium text-[#888888]">Delivery status</span>
         <div className="flex flex-wrap gap-2">
           {(
             [
@@ -193,14 +239,39 @@ export function ErpSyncLogClient({ initialRows, initialStats }: Props) {
             </button>
           ))}
         </div>
+        {embedded ? (
+          <>
+            <span className="ml-0 font-sans text-xs font-medium text-[#888888] sm:ml-4">Sync review</span>
+            <div className="flex flex-wrap gap-2">
+              {(
+                [
+                  ["all", "All"],
+                  ["pending", "Pending"],
+                  ["approved", "Approved"],
+                  ["auto_applied", "Auto-applied"],
+                  ["rejected", "Rejected"],
+                  ["undone", "Undone"],
+                ] as const
+              ).map(([v, label]) => (
+                <button
+                  key={v}
+                  type="button"
+                  className={chipClass(pendingFilter === v)}
+                  onClick={() => setPendingFilter(v)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </>
+        ) : null}
         {loading ? <span className="font-sans text-xs text-[#888888]">Updating…</span> : null}
       </div>
 
       <div className="overflow-hidden rounded-xl bg-white">
         {rows.length === 0 ? (
           <div className="p-10 text-center font-sans text-sm text-[#888888]">
-            No sync events yet. The ERP sync layer will log all events here once the Front Sync module is installed
-            in your ERP.
+            No sync events match these filters.
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -212,55 +283,92 @@ export function ErpSyncLogClient({ initialRows, initialStats }: Props) {
                   <Table.HeadCell>Direction</Table.HeadCell>
                   <Table.HeadCell>Record ID</Table.HeadCell>
                   <Table.HeadCell>Status</Table.HeadCell>
+                  {embedded ? <Table.HeadCell>Sync</Table.HeadCell> : null}
                   <Table.HeadCell>Attempts</Table.HeadCell>
                   <Table.HeadCell align="right">Actions</Table.HeadCell>
                 </Table.Row>
               </Table.Head>
               <Table.Body>
-                {rows.map((row) => (
-                  <Table.Row key={row.id}>
-                    <Table.Cell className="whitespace-nowrap font-sans text-xs text-[#555555]">
-                      {new Date(row.created_at).toLocaleString(undefined, {
-                        dateStyle: "medium",
-                        timeStyle: "short",
-                      })}
-                    </Table.Cell>
-                    <Table.Cell className="font-mono text-xs text-[#1a1a2e]">{row.event_type}</Table.Cell>
-                    <Table.Cell>
-                      {row.direction === "dashboard_to_erp" ? (
-                        <Badge variant="blue" className="rounded-md">
-                          → ERP
-                        </Badge>
-                      ) : (
-                        <Badge variant="green" className="rounded-md">
-                          ← Dashboard
-                        </Badge>
-                      )}
-                    </Table.Cell>
-                    <Table.Cell className="max-w-[140px] truncate font-mono text-xs text-[#555555]">
-                      {row.record_id ?? "—"}
-                    </Table.Cell>
-                    <Table.Cell>{statusBadge(row.status)}</Table.Cell>
-                    <Table.Cell className="font-sans text-xs text-[#555555]">
-                      {row.attempt_count != null && row.attempt_count > 1 ? row.attempt_count : "—"}
-                    </Table.Cell>
-                    <Table.Cell align="right">
-                      {row.direction === "dashboard_to_erp" &&
-                      (row.status === "failed" || row.status === "dead_letter") ? (
-                        <button
-                          type="button"
-                          disabled={retryingId === row.id}
-                          className="rounded-lg bg-[#E8A020] px-3 py-1.5 font-sans text-xs font-medium text-[#1a1a2e] transition-opacity disabled:opacity-50"
-                          onClick={() => void onRetry(row.id)}
-                        >
-                          {retryingId === row.id ? "…" : "Retry"}
-                        </button>
-                      ) : (
-                        <span className="text-xs text-[#CCCCCC]">—</span>
-                      )}
-                    </Table.Cell>
-                  </Table.Row>
-                ))}
+                {rows.map((row) => {
+                  const p = row.erp_sync_pending;
+                  const canUndo =
+                    p &&
+                    (p.status === "approved" || p.status === "auto_applied");
+                  return (
+                    <Table.Row key={row.id}>
+                      <Table.Cell className="whitespace-nowrap font-sans text-xs text-[#555555]">
+                        {new Date(row.created_at).toLocaleString(undefined, {
+                          dateStyle: "medium",
+                          timeStyle: "short",
+                        })}
+                      </Table.Cell>
+                      <Table.Cell className="font-mono text-xs text-[#1a1a2e]">{row.event_type}</Table.Cell>
+                      <Table.Cell>
+                        {row.direction === "dashboard_to_erp" ? (
+                          <Badge variant="blue" className="rounded-md">
+                            → ERP
+                          </Badge>
+                        ) : (
+                          <Badge variant="green" className="rounded-md">
+                            ← Dashboard
+                          </Badge>
+                        )}
+                      </Table.Cell>
+                      <Table.Cell className="max-w-[140px] truncate font-mono text-xs text-[#555555]">
+                        {row.record_id ?? "—"}
+                      </Table.Cell>
+                      <Table.Cell>{statusBadge(row.status)}</Table.Cell>
+                      {embedded ? (
+                        <Table.Cell>
+                          {p?.auto_applied ? (
+                            <Badge variant="amber" className="rounded-md">
+                              auto
+                            </Badge>
+                          ) : p?.status ? (
+                            <span className="font-sans text-xs capitalize text-[#555555]">{p.status}</span>
+                          ) : (
+                            <span className="text-xs text-[#CCCCCC]">—</span>
+                          )}
+                        </Table.Cell>
+                      ) : null}
+                      <Table.Cell className="font-sans text-xs text-[#555555]">
+                        {row.attempt_count != null && row.attempt_count > 1 ? row.attempt_count : "—"}
+                      </Table.Cell>
+                      <Table.Cell align="right">
+                        <div className="flex flex-wrap justify-end gap-2">
+                          {canUndo && p ? (
+                            <button
+                              type="button"
+                              disabled={undoingId === p.id}
+                              className="rounded-lg border border-[#1a1a2e] px-2.5 py-1 font-sans text-xs font-medium text-[#1a1a2e] hover:bg-[#1a1a2e]/5 disabled:opacity-50"
+                              onClick={() => void onUndo(p.id)}
+                            >
+                              {undoingId === p.id ? "…" : "Undo"}
+                            </button>
+                          ) : null}
+                          {row.direction === "dashboard_to_erp" &&
+                          (row.status === "failed" || row.status === "dead_letter") ? (
+                            <button
+                              type="button"
+                              disabled={retryingId === row.id}
+                              className="rounded-lg bg-[#E8A020] px-3 py-1.5 font-sans text-xs font-medium text-[#1a1a2e] transition-opacity disabled:opacity-50"
+                              onClick={() => void onRetry(row.id)}
+                            >
+                              {retryingId === row.id ? "…" : "Retry"}
+                            </button>
+                          ) : null}
+                          {!canUndo &&
+                          !(
+                            row.direction === "dashboard_to_erp" &&
+                            (row.status === "failed" || row.status === "dead_letter")
+                          ) ? (
+                            <span className="text-xs text-[#CCCCCC]">—</span>
+                          ) : null}
+                        </div>
+                      </Table.Cell>
+                    </Table.Row>
+                  );
+                })}
               </Table.Body>
             </Table>
           </div>

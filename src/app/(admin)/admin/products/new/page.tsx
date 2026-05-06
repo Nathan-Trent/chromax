@@ -1,5 +1,6 @@
 import { ProductForm } from "@/components/admin/products/ProductForm";
 import { hasPermission } from "@/lib/auth/permissions";
+import { getERPHealth } from "@/lib/erp/client";
 import { parseUserRoleRows } from "@/lib/auth/parse-user-roles";
 import { createClient } from "@/lib/supabase/server";
 import type { Role } from "@/types/role";
@@ -28,10 +29,20 @@ export default async function AdminNewProductPage() {
     );
   }
 
+  const erpConnected = await Promise.race([
+    getERPHealth()
+      .then((h) => h.status === "ok")
+      .catch(() => false),
+    new Promise<boolean>((resolve) => {
+      setTimeout(() => resolve(false), 3000);
+    }),
+  ]);
+  const canErpView = hasPermission(roles, "erp_sync", "view");
+
   return (
     <div className="p-6 md:p-8">
       <h1 className="mb-6 font-sans text-2xl font-semibold text-[#1a1a2e]">New product</h1>
-      <ProductForm mode="create" />
+      <ProductForm mode="create" erpConnected={erpConnected} canErpView={canErpView} />
     </div>
   );
 }

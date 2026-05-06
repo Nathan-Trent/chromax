@@ -31,6 +31,9 @@ const NOTIF_KEYS = [
   { key: "welcome", label: "Welcome email (to new customer)" },
   { key: "password_reset", label: "Password reset (to customer)" },
   { key: "staff_invite", label: "Staff invitation (to invited staff member)" },
+  { key: "erp_sync_review", label: "ERP sync — review required (team)" },
+  { key: "erp_sync_auto_applied", label: "ERP sync — auto-applied (team)" },
+  { key: "erp_sync_actioned", label: "ERP sync — approved or rejected (team)" },
 ] as const;
 
 export function EmailSettings({ settings }: EmailSettingsProps) {

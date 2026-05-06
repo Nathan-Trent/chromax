@@ -436,10 +436,10 @@ export function AdminShell({ user, roles, children }: AdminShellProps) {
       </aside>
 
       <div className="flex min-h-screen flex-col lg:ml-[240px]">
-        <header className="hidden h-14 shrink-0 items-center justify-end border-b border-[#E8E8E4] bg-[#F5F0E8] px-6 lg:flex">
+        <header className="relative z-10 hidden h-14 shrink-0 items-center justify-end overflow-visible border-b border-[#E8E8E4] bg-[#F5F0E8] px-6 lg:flex">
           <NotificationBell userId={user.id} variant="desktop" />
         </header>
-        <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#E8E8E4] bg-[#F5F0E8] px-4 lg:hidden">
+        <header className="relative z-10 flex h-14 shrink-0 items-center justify-between overflow-visible border-b border-[#E8E8E4] bg-[#F5F0E8] px-4 lg:hidden">
           <button
             type="button"
             className="min-h-11 min-w-11 rounded-lg p-2 text-[#1a1a2e] hover:bg-black/5"

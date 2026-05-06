@@ -1,6 +1,9 @@
-import { ErpSyncLogClient } from "@/components/admin/erp/ErpSyncLogClient";
-import { hasPermission } from "@/lib/auth/permissions";
+import { ErpSyncHub } from "@/components/admin/erp/ErpSyncHub";
+import type { ErpSyncLogRow, ErpSyncStats } from "@/components/admin/erp/ErpSyncLogClient";
+import { hasPermission, isSuperAdmin } from "@/lib/auth/permissions";
 import { parseUserRoleRows } from "@/lib/auth/parse-user-roles";
+import { getERPHealth } from "@/lib/erp/client";
+import { getErpOverviewStats } from "@/lib/erp/overview-stats";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 
@@ -28,7 +31,16 @@ export default async function AdminErpSyncPage() {
     );
   }
 
-  const [logsRes, totalRes, successRes, failedRes, lastRes] = await Promise.all([
+  const erpConnected = await Promise.race([
+    getERPHealth()
+      .then((h) => h.status === "ok")
+      .catch(() => false),
+    new Promise<boolean>((resolve) => {
+      setTimeout(() => resolve(false), 3000);
+    }),
+  ]);
+
+  const [logsRes, totalRes, successRes, failedRes, lastRes, overview] = await Promise.all([
     supabase.from("erp_sync_log").select("*").order("created_at", { ascending: false }).limit(50),
     supabase.from("erp_sync_log").select("*", { count: "exact", head: true }),
     supabase.from("erp_sync_log").select("*", { count: "exact", head: true }).eq("status", "success"),
@@ -42,6 +54,7 @@ export default async function AdminErpSyncPage() {
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle(),
+    getErpOverviewStats(supabase),
   ]);
 
   const total = totalRes.count ?? 0;
@@ -49,8 +62,30 @@ export default async function AdminErpSyncPage() {
   const failed = failedRes.count ?? 0;
   const successRate = total > 0 ? Math.round((success / total) * 1000) / 10 : 0;
 
-  const initialRows = logsRes.data ?? [];
-  const initialStats = {
+  let initialRows = (logsRes.data ?? []) as ErpSyncLogRow[];
+  const logIds = [...new Set(initialRows.map((r) => r.id))];
+  if (logIds.length > 0) {
+    const { data: pend } = await supabase
+      .from("erp_sync_pending")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(800);
+    const pendRows = pend ?? [];
+    const pendingByLog = new Map<string, (typeof pendRows)[number]>();
+    for (const p of pendRows) {
+      const pay = p.payload as Record<string, unknown> | null;
+      const lid = pay?.webhook_log_id;
+      if (typeof lid === "string" && logIds.includes(lid) && !pendingByLog.has(lid)) {
+        pendingByLog.set(lid, p);
+      }
+    }
+    initialRows = initialRows.map((r) => ({
+      ...r,
+      erp_sync_pending: pendingByLog.get(r.id) ?? null,
+    }));
+  }
+
+  const initialStats: ErpSyncStats = {
     total,
     successRate,
     failed,
@@ -65,7 +100,13 @@ export default async function AdminErpSyncPage() {
       </p>
 
       <div className="mt-8">
-        <ErpSyncLogClient initialRows={initialRows} initialStats={initialStats} />
+        <ErpSyncHub
+          erpConnected={erpConnected}
+          isSuperAdmin={isSuperAdmin(roles)}
+          overview={overview}
+          initialRows={initialRows}
+          initialStats={initialStats}
+        />
       </div>
     </div>
   );

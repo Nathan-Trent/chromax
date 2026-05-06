@@ -85,6 +85,92 @@ export async function getERPHealth(): Promise<ERPHealthApiResponse> {
   }
 }
 
+export type ERPFrontProductHit = {
+  erp_id: number;
+  name: string;
+  sku: string;
+  category: string;
+  stock: number;
+  unit: string;
+  sell_price: number;
+};
+
+function pickStr(v: unknown): string {
+  if (typeof v === "string") return v;
+  if (typeof v === "number" && Number.isFinite(v)) return String(v);
+  return "";
+}
+
+function pickNum(v: unknown, fallback = 0): number {
+  if (typeof v === "number" && Number.isFinite(v)) return v;
+  if (typeof v === "string" && v.trim()) {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : fallback;
+  }
+  return fallback;
+}
+
+function parseProductId(v: unknown): number | null {
+  if (typeof v === "number" && Number.isFinite(v)) return Math.trunc(v);
+  if (typeof v === "string" && /^\s*\d+\s*$/.test(v)) return Number.parseInt(v.trim(), 10);
+  return null;
+}
+
+function normalizeFrontProduct(row: Record<string, unknown>): ERPFrontProductHit | null {
+  const erp_id = parseProductId(row.id ?? row.erp_id ?? row.product_id);
+  if (erp_id == null) return null;
+  const name = pickStr(row.name ?? row.product_name);
+  if (!name) return null;
+  return {
+    erp_id: Math.trunc(erp_id),
+    name,
+    sku: pickStr(row.sku ?? row.code ?? row.product_code),
+    category: pickStr(row.category ?? row.category_name ?? "—"),
+    stock: Math.floor(pickNum(row.stock ?? row.quantity ?? row.qty, 0)),
+    unit: pickStr(row.unit ?? row.uom ?? "units") || "units",
+    sell_price: pickNum(row.sell_price ?? row.price ?? row.amount, 0),
+  };
+}
+
+/**
+ * Front Sync catalogue search (`GET /api/frontsync/products`).
+ */
+export async function searchERPProducts(q: string): Promise<{
+  products: ERPFrontProductHit[];
+  configured: boolean;
+}> {
+  if (!erpBase() || !process.env.ERP_API_TOKEN?.trim()) {
+    return { products: [], configured: false };
+  }
+  const res = await erpFetch(
+    `/api/frontsync/products?search=${encodeURIComponent(q)}&per_page=20`,
+    { method: "GET" },
+  );
+  if (!res) {
+    return { products: [], configured: false };
+  }
+  if (!res.ok) {
+    console.warn("[ERP client] searchERPProducts failed:", res.status);
+    return { products: [], configured: true };
+  }
+  const json = (await res.json().catch(() => null)) as Record<string, unknown> | unknown[] | null;
+  let rows: unknown[] = [];
+  if (Array.isArray(json)) {
+    rows = json;
+  } else if (json && typeof json === "object") {
+    const o = json as Record<string, unknown>;
+    if (Array.isArray(o.data)) rows = o.data as unknown[];
+    else if (Array.isArray(o.products)) rows = o.products as unknown[];
+  }
+  const products: ERPFrontProductHit[] = [];
+  for (const r of rows) {
+    if (!r || typeof r !== "object") continue;
+    const n = normalizeFrontProduct(r as Record<string, unknown>);
+    if (n) products.push(n);
+  }
+  return { products, configured: true };
+}
+
 export async function getERPProductStock(
   erpProductId: string,
 ): Promise<{

@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 
 /** Columns exposed to non-admin contexts — never includes min_b2b_price_* (see chromax-data-models.md). */
 export const PUBLIC_PRODUCT_COLUMNS =
-  "id,name,slug,description,short_desc,category,images,price_ngn,price_usd,price_gbp,bulk_tiers,stock,low_threshold,tds_url,msds_url,seo_title,seo_description,seo_keywords,status,is_featured,requires_colour_selection,erp_product_id,created_by,created_at,updated_at" as const;
+  "id,name,slug,description,short_desc,category,images,price_ngn,price_usd,price_gbp,bulk_tiers,stock,low_threshold,tds_url,msds_url,seo_title,seo_description,seo_keywords,status,is_featured,requires_colour_selection,erp_product_id,erp_product_name,erp_linked_at,erp_last_stock_sync,created_by,created_at,updated_at" as const;
 
 export type ProductCategory =
   | "industrial"
@@ -41,7 +41,10 @@ export type Product = {
   status: "draft" | "live" | "archived";
   is_featured: boolean;
   requires_colour_selection: boolean;
-  erp_product_id: string | null;
+  erp_product_id: number | null;
+  erp_product_name: string | null;
+  erp_linked_at: string | null;
+  erp_last_stock_sync: string | null;
   created_by: string | null;
   created_at: string;
   updated_at: string;

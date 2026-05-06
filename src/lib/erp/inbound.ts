@@ -53,7 +53,11 @@ export async function applyErpInboundEvent(
         if (erpPid == null || stockVal == null) break;
         await service
           .from("products")
-          .update({ stock: Math.floor(stockVal), updated_at: new Date().toISOString() })
+          .update({
+            stock: Math.floor(stockVal),
+            erp_last_stock_sync: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
           .eq("erp_product_id", erpPid);
         break;
       }
@@ -210,12 +214,6 @@ export async function applyErpInboundEvent(
         if (slug) patch.slug = slug;
         if (stock != null) patch.stock = Math.floor(stock);
         if (lowTh != null) patch.low_threshold = Math.floor(lowTh);
-        const pn = num(data, "price_ngn");
-        const pu = num(data, "price_usd");
-        const pg = num(data, "price_gbp");
-        if (pn != null) patch.price_ngn = pn;
-        if (pu != null) patch.price_usd = pu;
-        if (pg != null) patch.price_gbp = pg;
         await service.from("products").update(patch).eq("erp_product_id", erpPid);
         break;
       }

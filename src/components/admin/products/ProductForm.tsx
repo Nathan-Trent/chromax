@@ -1,13 +1,16 @@
 "use client";
 
+import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
+import { Spinner } from "@/components/ui/Spinner";
 import { Toast } from "@/components/ui/Toast";
 import { showConfirm } from "@/components/ui/GlobalAlertDialog";
 import type { Product } from "@/lib/supabase/queries/products";
+import { Search } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 function slugify(name: string): string {
   return name
@@ -56,12 +59,31 @@ function Toggle({ on, onToggle, id }: { on: boolean; onToggle: () => void; id: s
 export interface ProductFormProps {
   product?: Product | null;
   mode: "create" | "edit";
+  /** Server-checked: ERP health returned OK within a short timeout. */
+  erpConnected?: boolean;
+  /** User has erp_sync.view */
+  canErpView?: boolean;
 }
 
 type Category = Product["category"];
 type Status = Product["status"];
 
-export function ProductForm({ product, mode }: ProductFormProps) {
+type ErpSearchHit = {
+  erp_id: number;
+  name: string;
+  sku: string;
+  category: string;
+  stock: number;
+  unit: string;
+  sell_price: number;
+};
+
+export function ProductForm({
+  product,
+  mode,
+  erpConnected = false,
+  canErpView = false,
+}: ProductFormProps) {
   const router = useRouter();
   const slugTouched = useRef(false);
   const [seoOpen, setSeoOpen] = useState(false);
@@ -70,6 +92,13 @@ export function ProductForm({ product, mode }: ProductFormProps) {
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [archiveLoading, setArchiveLoading] = useState(false);
+
+  const [erpQuery, setErpQuery] = useState("");
+  const [erpHits, setErpHits] = useState<ErpSearchHit[]>([]);
+  const [erpSearchLoading, setErpSearchLoading] = useState(false);
+  const [erpDropdownOpen, setErpDropdownOpen] = useState(false);
+  const [erpLinkBusy, setErpLinkBusy] = useState(false);
+  const erpDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [name, setName] = useState(product?.name ?? "");
   const [slug, setSlug] = useState(product?.slug ?? "");
@@ -101,6 +130,142 @@ export function ProductForm({ product, mode }: ProductFormProps) {
     if (mode !== "create" || slugTouched.current) return;
     setSlug(slugify(name));
   }, [name, mode]);
+
+  const runErpSearch = useCallback(async (term: string) => {
+    if (!erpConnected || !canErpView || mode !== "edit" || !product?.id) return;
+    setErpSearchLoading(true);
+    try {
+      const res = await fetch(
+        `/api/admin/erp-sync/products/search?q=${encodeURIComponent(term)}`,
+        { cache: "no-store" },
+      );
+      const json = (await res.json()) as {
+        data?: { products: ErpSearchHit[] };
+        error?: string;
+      };
+      if (!res.ok) {
+        setErpHits([]);
+        return;
+      }
+      setErpHits(json.data?.products ?? []);
+    } finally {
+      setErpSearchLoading(false);
+    }
+  }, [canErpView, erpConnected, mode, product?.id]);
+
+  useEffect(() => {
+    if (!erpConnected || !canErpView || mode !== "edit" || !product?.id) return;
+    const t = erpQuery.trim();
+    if (erpDebounceRef.current) {
+      clearTimeout(erpDebounceRef.current);
+    }
+    if (t.length < 2) {
+      setErpHits([]);
+      return;
+    }
+    erpDebounceRef.current = setTimeout(() => {
+      void runErpSearch(t);
+    }, 400);
+    return () => {
+      if (erpDebounceRef.current) {
+        clearTimeout(erpDebounceRef.current);
+      }
+    };
+  }, [erpQuery, erpConnected, canErpView, mode, product?.id, runErpSearch]);
+
+  function fmtErpDate(isoT: string | null | undefined): string {
+    if (!isoT) return "Never";
+    try {
+      return new Date(isoT).toLocaleString(undefined, {
+        dateStyle: "medium",
+        timeStyle: "short",
+      });
+    } catch {
+      return isoT;
+    }
+  }
+
+  function fmtErpMoney(n: number): string {
+    try {
+      return new Intl.NumberFormat("en-NG", {
+        style: "currency",
+        currency: "NGN",
+        maximumFractionDigits: 0,
+      }).format(n);
+    } catch {
+      return String(n);
+    }
+  }
+
+  async function linkToErp(hit: ErpSearchHit) {
+    if (!product?.id) return;
+    const ok = await showConfirm({
+      title: "Link product to ERP?",
+      message: `Link “${product.name}” to “${hit.name}”?`,
+      confirmLabel: "Link product",
+      cancelLabel: "Cancel",
+      confirmVariant: "teal",
+      icon: "info",
+    });
+    if (!ok) return;
+    setErpLinkBusy(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/admin/erp-sync/products/link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          dashboard_product_id: product.id,
+          erp_product_id: hit.erp_id,
+          erp_product_name: hit.name,
+        }),
+      });
+      const json = (await res.json()) as { error?: string };
+      if (!res.ok) {
+        setError(json.error ?? "Could not link product");
+        return;
+      }
+      setSuccess("Product linked to ERP successfully");
+      setErpDropdownOpen(false);
+      setErpQuery("");
+      setErpHits([]);
+      router.refresh();
+    } finally {
+      setErpLinkBusy(false);
+    }
+  }
+
+  async function unlinkErp() {
+    if (!product?.id) return;
+    const ok = await showConfirm({
+      title: "Unlink from ERP?",
+      message:
+        "Unlink this product from the ERP? Stock sync will stop for this product.",
+      confirmLabel: "Unlink",
+      cancelLabel: "Cancel",
+      confirmVariant: "danger",
+      icon: "warning",
+    });
+    if (!ok) return;
+    setErpLinkBusy(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/admin/erp-sync/products/link", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dashboard_product_id: product.id }),
+      });
+      const json = (await res.json()) as { error?: string };
+      if (!res.ok) {
+        setError(json.error ?? "Could not unlink");
+        return;
+      }
+      setSuccess("Product unlinked from ERP.");
+      router.refresh();
+    } finally {
+      setErpLinkBusy(false);
+    }
+  }
 
 
 
@@ -431,6 +596,107 @@ export function ProductForm({ product, mode }: ProductFormProps) {
           </div>
         ) : null}
       </section>
+
+      {erpConnected && canErpView ? (
+        <section className="mb-4 rounded-xl bg-white p-6">
+          <p className="mb-4 font-sans text-[11px] font-medium uppercase tracking-widest text-[#E8A020]">
+            ERP Product Link
+          </p>
+          {mode === "create" || !product?.id ? (
+            <p className="font-sans text-sm text-[#555555]">
+              Save the product first (draft or publish) — then you can link it to an ERP catalogue item here.
+            </p>
+          ) : product.erp_product_id != null ? (
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant="teal">Linked</Badge>
+              </div>
+              <p className="font-sans text-sm text-[#555555]">
+                Linked to:{" "}
+                <span className="font-medium text-[#1a1a2e]">
+                  {product.erp_product_name ?? "—"}
+                </span>
+              </p>
+              <p className="font-mono text-xs text-[#888888]">
+                ERP Product ID: {product.erp_product_id}
+              </p>
+              <p className="font-sans text-sm text-[#555555]">
+                Last stock sync:{" "}
+                <span className="text-[#1a1a2e]">
+                  {fmtErpDate(product.erp_last_stock_sync ?? null)}
+                </span>
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                loading={erpLinkBusy}
+                disabled={erpLinkBusy}
+                className="border-[#993C1D] text-[#993C1D] hover:bg-[#993C1D]/10"
+                onClick={() => void unlinkErp()}
+              >
+                Unlink
+              </Button>
+            </div>
+          ) : (
+            <div className="relative">
+              <label className="mb-1.5 block font-sans text-[13px] font-medium text-[#333]">
+                Search ERP products
+              </label>
+              <div className="relative">
+                <Search
+                  className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#888]"
+                  aria-hidden
+                />
+                <input
+                  type="search"
+                  autoComplete="off"
+                  placeholder="Type to search ERP products..."
+                  value={erpQuery}
+                  onChange={(e) => {
+                    setErpQuery(e.target.value);
+                    setErpDropdownOpen(true);
+                  }}
+                  onFocus={() => setErpDropdownOpen(true)}
+                  onBlur={() => {
+                    window.setTimeout(() => setErpDropdownOpen(false), 150);
+                  }}
+                  className="w-full rounded-lg border border-[#D0D0CA] bg-white py-2.5 pl-10 pr-3 font-sans text-sm text-[#333333] placeholder:text-[#999] focus:outline-none focus:ring-2 focus:ring-[var(--color-gold)] focus:border-[var(--color-gold)]"
+                />
+                {erpSearchLoading ? (
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <Spinner size="sm" color="navy" />
+                  </span>
+                ) : null}
+              </div>
+              {erpDropdownOpen && erpHits.length > 0 ? (
+                <div className="absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-xl border border-[#E8E8E4] bg-white shadow-xl">
+                  {erpHits.map((hit) => (
+                    <button
+                      key={hit.erp_id}
+                      type="button"
+                      className="w-full cursor-pointer border-b border-[#F0EDE6] p-3 text-left last:border-b-0 hover:bg-[#F5F0E8]"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => void linkToErp(hit)}
+                    >
+                      <p className="font-sans text-[14px] font-medium text-[#1a1a2e]">
+                        {hit.name}
+                      </p>
+                      <p className="mt-1 flex flex-wrap gap-3 font-sans text-xs text-[#888888]">
+                        <span>SKU: {hit.sku || "—"}</span>
+                        <span>
+                          Stock: {hit.stock} {hit.unit}
+                        </span>
+                        <span>Price: {fmtErpMoney(hit.sell_price)}</span>
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          )}
+        </section>
+      ) : null}
 
       {mode === "edit" && product && product.status !== "archived" ? (
         <section className="mb-28 rounded-xl border border-[#993C1D]/30 bg-white p-6">

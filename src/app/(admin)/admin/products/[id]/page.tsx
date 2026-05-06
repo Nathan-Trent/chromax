@@ -1,5 +1,6 @@
 import { ProductForm } from "@/components/admin/products/ProductForm";
 import { hasPermission } from "@/lib/auth/permissions";
+import { getERPHealth } from "@/lib/erp/client";
 import { parseUserRoleRows } from "@/lib/auth/parse-user-roles";
 import { getAdminProductById } from "@/lib/supabase/queries/products-admin";
 import { createClient } from "@/lib/supabase/server";
@@ -50,6 +51,16 @@ export default async function AdminProductEditPage({ params }: Props) {
     notFound();
   }
 
+  const erpConnected = await Promise.race([
+    getERPHealth()
+      .then((h) => h.status === "ok")
+      .catch(() => false),
+    new Promise<boolean>((resolve) => {
+      setTimeout(() => resolve(false), 3000);
+    }),
+  ]);
+  const canErpView = hasPermission(roles, "erp_sync", "view");
+
   return (
     <div className="p-6 md:p-8">
       <h1 className="mb-4 font-sans text-2xl font-semibold text-[#1a1a2e]">Edit product</h1>
@@ -69,7 +80,9 @@ export default async function AdminProductEditPage({ params }: Props) {
           </div>
           <div className="sm:col-span-2">
             <dt className="text-[#888888]">ERP product ID</dt>
-            <dd className="text-[#1a1a2e]">{product.erp_product_id?.trim() || "Not linked"}</dd>
+            <dd className="text-[#1a1a2e]">
+              {product.erp_product_id != null ? product.erp_product_id : "Not linked"}
+            </dd>
           </div>
         </dl>
         <Link
@@ -82,7 +95,12 @@ export default async function AdminProductEditPage({ params }: Props) {
         </Link>
       </div>
 
-      <ProductForm product={product} mode="edit" />
+      <ProductForm
+        product={product}
+        mode="edit"
+        erpConnected={erpConnected}
+        canErpView={canErpView}
+      />
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Table } from "@/components/ui/Table";
 import { hasPermission } from "@/lib/auth/permissions";
+import { getERPHealth } from "@/lib/erp/client";
 import { parseUserRoleRows } from "@/lib/auth/parse-user-roles";
 import type { Product, ProductCategory } from "@/lib/supabase/queries/products";
 import { getAdminProducts } from "@/lib/supabase/queries/products-admin";
@@ -121,12 +122,38 @@ export default async function AdminProductsPage({
   const page = filters.page ?? 1;
   const canCreate = hasPermission(roles, "products", "create");
 
+  const erpConnected = await Promise.race([
+    getERPHealth()
+      .then((h) => h.status === "ok")
+      .catch(() => false),
+    new Promise<boolean>((resolve) => {
+      setTimeout(() => resolve(false), 3000);
+    }),
+  ]);
+
   return (
     <div className="p-6 md:p-8">
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="font-sans text-2xl font-semibold text-[#1a1a2e]">Products</h1>
           <p className="mt-1 font-sans text-sm text-[#888888]">Manage your product catalogue</p>
+          <div className="mt-2 flex items-center gap-2">
+            <span
+              className={[
+                "h-2 w-2 rounded-full",
+                erpConnected ? "bg-[#0F6E56]" : "bg-[#BBBBBB]",
+              ].join(" ")}
+              aria-hidden
+            />
+            <span
+              className={[
+                "font-sans text-xs",
+                erpConnected ? "text-[#0F6E56]" : "text-[#888888]",
+              ].join(" ")}
+            >
+              {erpConnected ? "ERP connected" : "ERP not connected"}
+            </span>
+          </div>
         </div>
         {canCreate ? (
           <Link href="/admin/products/new">

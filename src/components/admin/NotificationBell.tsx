@@ -53,7 +53,8 @@ export function NotificationBell({ userId, variant }: NotificationBellProps) {
   const [items, setItems] = useState<NotifRow[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [open, setOpen] = useState(false);
-  const wrapRef = useRef<HTMLDivElement | null>(null);
+  const bellRef = useRef<HTMLButtonElement | null>(null);
+  const panelRef = useRef<HTMLDivElement | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -107,14 +108,23 @@ export function NotificationBell({ userId, variant }: NotificationBellProps) {
   }, [userId, variant]);
 
   useEffect(() => {
-    if (!open) return;
-    function onDocMouseDown(e: MouseEvent) {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
+    function handleClickOutside(e: MouseEvent) {
+      const t = e.target as Node;
+      if (
+        panelRef.current &&
+        !panelRef.current.contains(t) &&
+        bellRef.current &&
+        !bellRef.current.contains(t)
+      ) {
         setOpen(false);
       }
     }
-    document.addEventListener("mousedown", onDocMouseDown);
-    return () => document.removeEventListener("mousedown", onDocMouseDown);
+    if (open) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, [open]);
 
   async function markRead(ids?: string[]) {
@@ -151,6 +161,7 @@ export function NotificationBell({ userId, variant }: NotificationBellProps) {
 
   const bellBtn = (
     <button
+      ref={bellRef}
       type="button"
       aria-label="Notifications"
       onClick={() => setOpen((v) => !v)}
@@ -169,7 +180,8 @@ export function NotificationBell({ userId, variant }: NotificationBellProps) {
 
   const panel = open ? (
     <div
-      className="absolute right-0 z-50 mt-2 w-80 max-h-[480px] overflow-y-auto rounded-xl border border-[#E8E8E4] bg-white shadow-xl"
+      ref={panelRef}
+      className="absolute right-0 top-full z-[9999] mt-2 w-80 max-h-[min(480px,calc(100vh-80px))] overflow-y-auto rounded-xl border border-[#E8E8E4] bg-white shadow-xl"
     >
       <div className="flex items-center justify-between border-b border-[#F0EDE6] px-3 py-2.5">
         <span className="font-sans text-sm font-semibold text-[#1a1a2e]">Notifications</span>
@@ -215,7 +227,7 @@ export function NotificationBell({ userId, variant }: NotificationBellProps) {
 
   if (variant === "mobile") {
     return (
-      <div className="relative flex items-center" ref={wrapRef}>
+      <div className="relative flex shrink-0 items-center">
         {bellBtn}
         {panel}
       </div>
@@ -223,7 +235,7 @@ export function NotificationBell({ userId, variant }: NotificationBellProps) {
   }
 
   return (
-    <div className="relative flex items-center" ref={wrapRef}>
+    <div className="relative flex shrink-0 items-center">
       {bellBtn}
       {panel}
     </div>

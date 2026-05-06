@@ -44,6 +44,9 @@ const DEFAULT_NOTIFICATIONS: Record<string, boolean> = {
   password_reset: true,
   welcome: true,
   staff_invite: true,
+  erp_sync_review: true,
+  erp_sync_auto_applied: true,
+  erp_sync_actioned: true,
 };
 
 export async function getEmailConfig(): Promise<SMTPConfig> {

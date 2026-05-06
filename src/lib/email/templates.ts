@@ -237,6 +237,109 @@ export function smtpSelfTest(): EmailTemplate {
   };
 }
 
+export function erpSyncPendingReview(data: {
+  userName: string;
+  eventType: string;
+  fieldChanged: string;
+  productName: string;
+  currentValue: unknown;
+  incomingValue: unknown;
+  dashboardUrl: string;
+}): EmailTemplate {
+  const summarize = (v: unknown): string => {
+    if (v == null) return "—";
+    if (typeof v === "object") {
+      return escapeHtml(
+        Object.entries(v as Record<string, unknown>)
+          .map(([k, val]) => {
+            const disp =
+              val !== null && typeof val === "object" ? JSON.stringify(val) : String(val);
+            return `${k}: ${disp}`;
+          })
+          .join(" · "),
+      );
+    }
+    return escapeHtml(String(v));
+  };
+  const inner = `<h1 style="margin:0 0 12px;font-size:22px;font-weight:500;color:#1a1a2e;">ERP sync review required</h1>
+<p style="margin:0 0 12px;font-size:15px;">Hi ${escapeHtml(data.userName)},</p>
+<p style="margin:0 0 16px;font-size:15px;">A <strong style="font-family:monospace;font-size:13px;">${escapeHtml(data.eventType)}</strong> change needs your approval for <strong>${escapeHtml(data.productName)}</strong> (${escapeHtml(data.fieldChanged)}).</p>
+<table role="presentation" width="100%" style="background:#ffffff;border-radius:8px;padding:12px 16px;margin-bottom:16px;">
+<tr><td style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1.1px;color:#633806;">Current</td></tr>
+<tr><td style="font-size:14px;color:#555555;padding-bottom:8px;">${summarize(data.currentValue)}</td></tr>
+<tr><td style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1.1px;color:#BA7517;">Incoming</td></tr>
+<tr><td style="font-size:14px;color:#633806;">${summarize(data.incomingValue)}</td></tr>
+</table>
+<p style="margin:0;"><a href="${escapeHtml(data.dashboardUrl)}" style="display:inline-block;padding:12px 22px;background:#E8A020;color:#1a1a2e;text-decoration:none;border-radius:8px;font-size:14px;font-weight:500;">Review now</a></p>`;
+  return {
+    subject: `ERP sync review required — ${data.eventType}`,
+    html: wrapBody(inner),
+    text: `ERP sync review required — ${data.eventType}. Current: ${String(data.currentValue)}. Incoming: ${String(data.incomingValue)}. ${data.dashboardUrl}`,
+  };
+}
+
+export function erpSyncAutoApplied(data: {
+  userName: string;
+  eventType: string;
+  fieldChanged: string;
+  productName: string;
+  currentValue: unknown;
+  incomingValue: unknown;
+  undoWindowHours: number;
+  dashboardUrl: string;
+}): EmailTemplate {
+  const summarize = (v: unknown): string => {
+    if (v == null) return "—";
+    if (typeof v === "object") {
+      return escapeHtml(JSON.stringify(v));
+    }
+    return escapeHtml(String(v));
+  };
+  const hours = data.undoWindowHours;
+  const undoNote =
+    hours > 0
+      ? `You can undo this in the ERP Sync screen within <strong>${hours}</strong> hours.`
+      : `This change cannot be undone from the dashboard (undo window is 0 hours).`;
+  const inner = `<h1 style="margin:0 0 12px;font-size:22px;font-weight:500;color:#1a1a2e;">ERP sync auto-applied</h1>
+<p style="margin:0 0 12px;font-size:15px;">Hi ${escapeHtml(data.userName)},</p>
+<p style="margin:0 0 16px;font-size:15px;">A <strong style="font-family:monospace;font-size:13px;">${escapeHtml(data.eventType)}</strong> event was applied automatically for <strong>${escapeHtml(data.productName)}</strong> (${escapeHtml(data.fieldChanged)}).</p>
+<p style="margin:0 0 8px;font-size:13px;color:#555;">Before: ${summarize(data.currentValue)}</p>
+<p style="margin:0 0 16px;font-size:13px;color:#633806;">After: ${summarize(data.incomingValue)}</p>
+<p style="margin:0 0 16px;font-size:14px;">${undoNote}</p>
+<p style="margin:0;"><a href="${escapeHtml(data.dashboardUrl)}" style="display:inline-block;padding:12px 22px;background:#E8A020;color:#1a1a2e;text-decoration:none;border-radius:8px;font-size:14px;font-weight:500;">Open ERP Sync</a></p>`;
+  return {
+    subject: `ERP sync auto-applied — ${data.eventType}`,
+    html: wrapBody(inner),
+    text: `ERP sync auto-applied — ${data.eventType}. ${data.dashboardUrl}`,
+  };
+}
+
+export function erpSyncActioned(data: {
+  userName: string;
+  action: "approved" | "rejected";
+  eventType: string;
+  fieldChanged: string;
+  actorEmail: string;
+  productName: string;
+  note: string;
+  dashboardUrl: string;
+}): EmailTemplate {
+  const label = data.action === "approved" ? "approved" : "rejected";
+  const note = data.note?.trim()
+    ? `<p style="margin:12px 0 0;font-size:14px;"><strong>Note:</strong> ${escapeHtml(data.note)}</p>`
+    : "";
+  const inner = `<h1 style="margin:0 0 12px;font-size:22px;font-weight:500;color:#1a1a2e;">ERP sync ${label}</h1>
+<p style="margin:0 0 12px;font-size:15px;">Hi ${escapeHtml(data.userName)},</p>
+<p style="margin:0 0 16px;font-size:15px;"><strong>${escapeHtml(data.actorEmail)}</strong> ${escapeHtml(label)} a <strong style="font-family:monospace;font-size:13px;">${escapeHtml(data.eventType)}</strong> sync (${escapeHtml(data.fieldChanged)}) for <strong>${escapeHtml(data.productName)}</strong>.</p>
+${note}
+<p style="margin:16px 0 0;"><a href="${escapeHtml(data.dashboardUrl)}" style="display:inline-block;padding:12px 22px;background:#E8A020;color:#1a1a2e;text-decoration:none;border-radius:8px;font-size:14px;font-weight:500;">Open ERP Sync</a></p>`;
+  return {
+    subject: `ERP sync ${label} — ${data.eventType}`,
+    html: wrapBody(inner),
+    text: `ERP sync ${label}: ${data.eventType} / ${data.fieldChanged}. Actor: ${data.actorEmail}. ${data.dashboardUrl}`,
+  };
+}
+
 /** Templates receive loose `data` from the mailer; each function narrows internally. */
 export const EMAIL_TEMPLATES = {
   order_confirmation: orderConfirmation,
@@ -245,6 +348,38 @@ export const EMAIL_TEMPLATES = {
   b2b_offer_response: b2bOfferResponse,
   approval_requested: approvalRequested,
   approval_actioned: approvalActioned,
+  erp_sync_pending_review: (d: Record<string, unknown>) =>
+    erpSyncPendingReview({
+      userName: String(d.userName ?? ""),
+      eventType: String(d.eventType ?? ""),
+      fieldChanged: String(d.fieldChanged ?? ""),
+      productName: String(d.productName ?? ""),
+      currentValue: d.currentValue,
+      incomingValue: d.incomingValue,
+      dashboardUrl: String(d.dashboardUrl ?? ""),
+    }),
+  erp_sync_auto_applied: (d: Record<string, unknown>) =>
+    erpSyncAutoApplied({
+      userName: String(d.userName ?? ""),
+      eventType: String(d.eventType ?? ""),
+      fieldChanged: String(d.fieldChanged ?? ""),
+      productName: String(d.productName ?? ""),
+      currentValue: d.currentValue,
+      incomingValue: d.incomingValue,
+      undoWindowHours: typeof d.undoWindowHours === "number" ? d.undoWindowHours : 0,
+      dashboardUrl: String(d.dashboardUrl ?? ""),
+    }),
+  erp_sync_actioned: (d: Record<string, unknown>) =>
+    erpSyncActioned({
+      userName: String(d.userName ?? ""),
+      action: d.action === "rejected" ? "rejected" : "approved",
+      eventType: String(d.eventType ?? ""),
+      fieldChanged: String(d.fieldChanged ?? ""),
+      actorEmail: String(d.actorEmail ?? ""),
+      productName: String(d.productName ?? ""),
+      note: String(d.note ?? ""),
+      dashboardUrl: String(d.dashboardUrl ?? ""),
+    }),
   welcome: welcomeEmail,
   password_reset: passwordReset,
   staff_invite: staffInvite,
