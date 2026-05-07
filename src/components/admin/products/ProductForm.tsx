@@ -78,6 +78,15 @@ type ErpSearchHit = {
   sell_price: number;
 };
 
+type PendingErpLinkState = {
+  erp_product_id: number;
+  erp_product_name: string;
+  sku: string;
+  stock: number;
+  category: string;
+  unit: string;
+};
+
 export function ProductForm({
   product,
   mode,
@@ -99,6 +108,7 @@ export function ProductForm({
   const [erpDropdownOpen, setErpDropdownOpen] = useState(false);
   const [erpLinkBusy, setErpLinkBusy] = useState(false);
   const erpDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [pendingErpLink, setPendingErpLink] = useState<PendingErpLinkState | null>(null);
 
   const [name, setName] = useState(product?.name ?? "");
   const [slug, setSlug] = useState(product?.slug ?? "");
@@ -132,7 +142,7 @@ export function ProductForm({
   }, [name, mode]);
 
   const runErpSearch = useCallback(async (term: string) => {
-    if (!erpConnected || !canErpView || mode !== "edit" || !product?.id) return;
+    if (!erpConnected || !canErpView) return;
     setErpSearchLoading(true);
     try {
       const res = await fetch(
@@ -151,10 +161,10 @@ export function ProductForm({
     } finally {
       setErpSearchLoading(false);
     }
-  }, [canErpView, erpConnected, mode, product?.id]);
+  }, [canErpView, erpConnected]);
 
   useEffect(() => {
-    if (!erpConnected || !canErpView || mode !== "edit" || !product?.id) return;
+    if (!erpConnected || !canErpView) return;
     const t = erpQuery.trim();
     if (erpDebounceRef.current) {
       clearTimeout(erpDebounceRef.current);
@@ -171,7 +181,7 @@ export function ProductForm({
         clearTimeout(erpDebounceRef.current);
       }
     };
-  }, [erpQuery, erpConnected, canErpView, mode, product?.id, runErpSearch]);
+  }, [erpQuery, erpConnected, canErpView, runErpSearch]);
 
   function fmtErpDate(isoT: string | null | undefined): string {
     if (!isoT) return "Never";
@@ -233,6 +243,20 @@ export function ProductForm({
     } finally {
       setErpLinkBusy(false);
     }
+  }
+
+  function selectPendingErpLinkFromSearch(hit: ErpSearchHit) {
+    setPendingErpLink({
+      erp_product_id: hit.erp_id,
+      erp_product_name: hit.name,
+      sku: hit.sku,
+      stock: hit.stock,
+      category: hit.category,
+      unit: hit.unit,
+    });
+    setErpDropdownOpen(false);
+    setErpQuery("");
+    setErpHits([]);
   }
 
   async function unlinkErp() {
@@ -324,9 +348,41 @@ export function ProductForm({
           setError(json.error ?? "Could not create product");
           return;
         }
-        if (json.data?.product) {
-          window.location.assign(`/admin/products/${json.data.product.id}`);
+        const newProduct = json.data?.product;
+        const newProductId = newProduct?.id;
+        if (!newProductId) {
+          setError("Product was created but no ID was returned.");
+          return;
         }
+
+        if (pendingErpLink) {
+          try {
+            const linkRes = await fetch("/api/admin/erp-sync/products/link", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                dashboard_product_id: newProductId,
+                erp_product_id: pendingErpLink.erp_product_id,
+                erp_product_name: pendingErpLink.erp_product_name,
+              }),
+            });
+            if (linkRes.ok) {
+              setSuccess("Product created and linked to ERP successfully");
+            } else {
+              setSuccess(
+                "Product created. ERP link failed — you can link it from the product page.",
+              );
+            }
+          } catch {
+            setSuccess(
+              "Product created. ERP link failed — you can link it from the product page.",
+            );
+          }
+          await new Promise((r) => setTimeout(r, 2000));
+        }
+
+        router.push(`/admin/products/${newProductId}`);
+        router.refresh();
       } else if (product) {
         const res = await fetch(`/api/admin/products/${product.id}`, {
           method: "PATCH",
@@ -388,6 +444,62 @@ export function ProductForm({
       setArchiveLoading(false);
     }
   }
+
+  const erpSearchBlock = (onPick: (hit: ErpSearchHit) => void) => (
+    <div className="relative">
+      <label className="mb-1.5 block font-sans text-[13px] font-medium text-[#333333]">
+        Search ERP products
+      </label>
+      <div className="relative">
+        <Search
+          className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#888]"
+          aria-hidden
+        />
+        <input
+          type="search"
+          autoComplete="off"
+          placeholder="Type to search ERP products..."
+          value={erpQuery}
+          onChange={(e) => {
+            setErpQuery(e.target.value);
+            setErpDropdownOpen(true);
+          }}
+          onFocus={() => setErpDropdownOpen(true)}
+          onBlur={() => {
+            window.setTimeout(() => setErpDropdownOpen(false), 150);
+          }}
+          className="w-full rounded-lg border border-[#D0D0CA] bg-white py-2.5 pl-10 pr-3 font-sans text-sm text-[#333333] placeholder:text-[#999] focus:outline-none focus:ring-2 focus:ring-[var(--color-gold)] focus:border-[var(--color-gold)]"
+        />
+        {erpSearchLoading ? (
+          <span className="absolute right-3 top-1/2 -translate-y-1/2">
+            <Spinner size="sm" color="navy" />
+          </span>
+        ) : null}
+      </div>
+      {erpDropdownOpen && erpHits.length > 0 ? (
+        <div className="absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-xl border border-[#E8E8E4] bg-white shadow-xl">
+          {erpHits.map((hit) => (
+            <button
+              key={hit.erp_id}
+              type="button"
+              className="w-full cursor-pointer border-b border-[#F0EDE6] p-3 text-left last:border-b-0 hover:bg-[#F5F0E8]"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => onPick(hit)}
+            >
+              <p className="font-sans text-[14px] font-medium text-[#1a1a2e]">{hit.name}</p>
+              <p className="mt-1 flex flex-wrap gap-3 font-sans text-xs text-[#888888]">
+                <span>SKU: {hit.sku || "—"}</span>
+                <span>
+                  Stock: {hit.stock} {hit.unit}
+                </span>
+                <span>Price: {fmtErpMoney(hit.sell_price)}</span>
+              </p>
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
 
   const areaBase =
     "w-full rounded-lg border border-[#D0D0CA] px-3.5 py-2.5 font-sans text-sm text-[#333333] placeholder:text-[#999] focus:outline-none focus:ring-2 focus:ring-[var(--color-gold)] focus:border-[var(--color-gold)]";
@@ -599,102 +711,89 @@ export function ProductForm({
 
       {erpConnected && canErpView ? (
         <section className="mb-4 rounded-xl bg-white p-6">
-          <p className="mb-4 font-sans text-[11px] font-medium uppercase tracking-widest text-[#E8A020]">
-            ERP Product Link
-          </p>
-          {mode === "create" || !product?.id ? (
-            <p className="font-sans text-sm text-[#555555]">
-              Save the product first (draft or publish) — then you can link it to an ERP catalogue item here.
-            </p>
-          ) : product.erp_product_id != null ? (
-            <div className="space-y-3">
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge variant="teal">Linked</Badge>
-              </div>
-              <p className="font-sans text-sm text-[#555555]">
-                Linked to:{" "}
-                <span className="font-medium text-[#1a1a2e]">
-                  {product.erp_product_name ?? "—"}
-                </span>
-              </p>
-              <p className="font-mono text-xs text-[#888888]">
-                ERP Product ID: {product.erp_product_id}
-              </p>
-              <p className="font-sans text-sm text-[#555555]">
-                Last stock sync:{" "}
-                <span className="text-[#1a1a2e]">
-                  {fmtErpDate(product.erp_last_stock_sync ?? null)}
-                </span>
-              </p>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                loading={erpLinkBusy}
-                disabled={erpLinkBusy}
-                className="border-[#993C1D] text-[#993C1D] hover:bg-[#993C1D]/10"
-                onClick={() => void unlinkErp()}
-              >
-                Unlink
-              </Button>
-            </div>
-          ) : (
-            <div className="relative">
-              <label className="mb-1.5 block font-sans text-[13px] font-medium text-[#333]">
-                Search ERP products
-              </label>
-              <div className="relative">
-                <Search
-                  className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#888]"
-                  aria-hidden
-                />
-                <input
-                  type="search"
-                  autoComplete="off"
-                  placeholder="Type to search ERP products..."
-                  value={erpQuery}
-                  onChange={(e) => {
-                    setErpQuery(e.target.value);
-                    setErpDropdownOpen(true);
-                  }}
-                  onFocus={() => setErpDropdownOpen(true)}
-                  onBlur={() => {
-                    window.setTimeout(() => setErpDropdownOpen(false), 150);
-                  }}
-                  className="w-full rounded-lg border border-[#D0D0CA] bg-white py-2.5 pl-10 pr-3 font-sans text-sm text-[#333333] placeholder:text-[#999] focus:outline-none focus:ring-2 focus:ring-[var(--color-gold)] focus:border-[var(--color-gold)]"
-                />
-                {erpSearchLoading ? (
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2">
-                    <Spinner size="sm" color="navy" />
-                  </span>
-                ) : null}
-              </div>
-              {erpDropdownOpen && erpHits.length > 0 ? (
-                <div className="absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-xl border border-[#E8E8E4] bg-white shadow-xl">
-                  {erpHits.map((hit) => (
-                    <button
-                      key={hit.erp_id}
-                      type="button"
-                      className="w-full cursor-pointer border-b border-[#F0EDE6] p-3 text-left last:border-b-0 hover:bg-[#F5F0E8]"
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => void linkToErp(hit)}
-                    >
-                      <p className="font-sans text-[14px] font-medium text-[#1a1a2e]">
-                        {hit.name}
-                      </p>
-                      <p className="mt-1 flex flex-wrap gap-3 font-sans text-xs text-[#888888]">
-                        <span>SKU: {hit.sku || "—"}</span>
-                        <span>
-                          Stock: {hit.stock} {hit.unit}
-                        </span>
-                        <span>Price: {fmtErpMoney(hit.sell_price)}</span>
-                      </p>
-                    </button>
-                  ))}
+          {mode === "create" ? (
+            pendingErpLink ? (
+              <>
+                <p className="mb-4 font-sans text-[11px] font-medium uppercase tracking-widest text-[#0F6E56]">
+                  ERP Product Link — selected
+                </p>
+                <div className="relative rounded-lg border-l-4 border-[#0F6E56] bg-[#E1F5EE] p-3 pr-10">
+                  <button
+                    type="button"
+                    aria-label="Clear ERP product selection"
+                    className="absolute top-2 right-2 flex h-8 w-8 items-center justify-center rounded-md font-sans text-lg leading-none text-[#0F6E56] transition-colors duration-150 hover:bg-[#0F6E56]/10 motion-reduce:transition-none"
+                    onClick={() => setPendingErpLink(null)}
+                  >
+                    ×
+                  </button>
+                  <p className="font-sans text-sm font-medium text-[#0F6E56]">
+                    Will link to: {pendingErpLink.erp_product_name}
+                  </p>
+                  <p className="mt-1 font-sans text-xs text-[#555555]">
+                    SKU: {pendingErpLink.sku || "—"} &nbsp; Stock: {pendingErpLink.stock}{" "}
+                    {pendingErpLink.unit}
+                  </p>
                 </div>
-              ) : null}
-            </div>
-          )}
+              </>
+            ) : (
+              <>
+                <p className="mb-1 font-sans text-sm font-medium text-[#333333]">
+                  Link to ERP product (optional)
+                </p>
+                <p className="mb-4 font-sans text-xs text-[#888888]">
+                  Search and select an ERP product to link. The link will be saved when you create
+                  this product.
+                </p>
+                {erpSearchBlock(selectPendingErpLinkFromSearch)}
+              </>
+            )
+          ) : product && product.erp_product_id != null ? (
+            <>
+              <p className="mb-4 font-sans text-[11px] font-medium uppercase tracking-widest text-[#E8A020]">
+                ERP Product Link
+              </p>
+              <div className="space-y-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant="teal">Linked</Badge>
+                </div>
+                <p className="font-sans text-sm text-[#555555]">
+                  Linked to:{" "}
+                  <span className="font-medium text-[#1a1a2e]">
+                    {product.erp_product_name ?? "—"}
+                  </span>
+                </p>
+                <p className="font-mono text-xs text-[#888888]">
+                  ERP Product ID: {product.erp_product_id}
+                </p>
+                <p className="font-sans text-sm text-[#555555]">
+                  Last stock sync:{" "}
+                  <span className="text-[#1a1a2e]">
+                    {fmtErpDate(product.erp_last_stock_sync ?? null)}
+                  </span>
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  loading={erpLinkBusy}
+                  disabled={erpLinkBusy}
+                  className="border-[#993C1D] text-[#993C1D] hover:bg-[#993C1D]/10"
+                  onClick={() => void unlinkErp()}
+                >
+                  Unlink
+                </Button>
+              </div>
+            </>
+          ) : product ? (
+            <>
+              <p className="mb-4 font-sans text-[11px] font-medium uppercase tracking-widest text-[#E8A020]">
+                ERP Product Link
+              </p>
+              {erpSearchBlock((hit) => {
+                void linkToErp(hit);
+              })}
+            </>
+          ) : null}
         </section>
       ) : null}
 
