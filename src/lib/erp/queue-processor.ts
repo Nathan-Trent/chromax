@@ -31,7 +31,7 @@ export function registerErpQueueProcessor(): void {
 
     let response: Response;
     try {
-      response = await fetch(`${base}/api/chromax/webhook`, {
+      response = await fetch(`${base}/api/frontsync/webhook`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

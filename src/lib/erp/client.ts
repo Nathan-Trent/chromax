@@ -61,7 +61,7 @@ export async function getERPHealth(): Promise<ERPHealthApiResponse> {
   }
 
   try {
-    const res = await erpFetch("/api/chromax/health", { method: "GET" });
+    const res = await erpFetch("/api/frontsync/health", { method: "GET" });
     if (!res) {
       return { status: "not_configured" };
     }
@@ -182,7 +182,7 @@ export async function getERPProductStock(
   last_updated: string;
 } | null> {
   const res = await erpFetch(
-    `/api/chromax/products/${encodeURIComponent(erpProductId)}/stock`,
+    `/api/frontsync/products/${encodeURIComponent(erpProductId)}/stock`,
     { method: "GET" },
   );
   if (!res) {
@@ -213,7 +213,7 @@ export async function getERPProductStockBulk(
   if (erpProductIds.length === 0 || !erpBase()) {
     return {};
   }
-  const res = await erpFetch("/api/chromax/products/stock/bulk", {
+  const res = await erpFetch("/api/frontsync/products/stock/bulk", {
     method: "POST",
     body: JSON.stringify({ product_ids: erpProductIds }),
   });
@@ -248,7 +248,7 @@ export async function getERPOrders(filters?: {
   if (filters?.status) params.set("status", filters.status);
   if (filters?.page != null) params.set("page", String(filters.page));
   const q = params.toString();
-  const res = await erpFetch(`/api/chromax/orders${q ? `?${q}` : ""}`, { method: "GET" });
+  const res = await erpFetch(`/api/frontsync/orders${q ? `?${q}` : ""}`, { method: "GET" });
   if (!res?.ok) {
     console.warn("[ERP client] getERPOrders failed:", res?.status);
     return { orders: [], total: 0 };
