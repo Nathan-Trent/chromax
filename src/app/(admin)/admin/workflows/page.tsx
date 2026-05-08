@@ -21,8 +21,25 @@ export default async function AdminWorkflowsPage() {
     .select(`roles ( id, name, description, permissions, is_system )`)
     .eq("user_id", user.id);
   const userRoles = parseUserRoleRows(userRoleRows ?? []);
+  const userRoleIds = new Set(userRoles.map((r) => r.id));
 
-  if (!isSuperAdmin(userRoles)) {
+  const { data: allWorkflowRows, error: wfFetchErr } = await supabase
+    .from("approval_workflows")
+    .select("*")
+    .order("action_type");
+  if (wfFetchErr) {
+    throw new Error(wfFetchErr.message);
+  }
+  const allWorkflows = (allWorkflowRows ?? []) as unknown as ApprovalWorkflowRow[];
+
+  const approverMatchedWorkflows = allWorkflows.filter(
+    (w) => w.approver_role_id != null && userRoleIds.has(w.approver_role_id as string),
+  );
+
+  const superUser = isSuperAdmin(userRoles);
+  const designatedApprover = approverMatchedWorkflows.length > 0;
+
+  if (!superUser && !designatedApprover) {
     return (
       <div className="p-8">
         <h1 className="mb-2 font-sans text-2xl font-semibold text-[#1a1a2e]">Approval Workflows</h1>
@@ -31,14 +48,19 @@ export default async function AdminWorkflowsPage() {
     );
   }
 
-  const { data: workflows, error: wErr } = await supabase.from("approval_workflows").select("*").order("action_type");
-  if (wErr) {
-    throw new Error(wErr.message);
-  }
+  const allowedActionTypes = new Set(approverMatchedWorkflows.map((w) => w.action_type));
 
-  const { data: roleRows, error: rErr } = await supabase.from("roles").select("*").order("name");
-  if (rErr) {
-    throw new Error(rErr.message);
+  let workflowsClientPayload: ApprovalWorkflowRow[] = allWorkflows;
+  let rolesForClient: Role[] = [];
+
+  if (superUser) {
+    const { data: roleRows, error: rErr } = await supabase.from("roles").select("*").order("name");
+    if (rErr) {
+      throw new Error(rErr.message);
+    }
+    rolesForClient = roleRows as unknown as Role[];
+  } else {
+    workflowsClientPayload = [];
   }
 
   const { data: pendingRows, error: pErr } = await supabase
@@ -51,7 +73,7 @@ export default async function AdminWorkflowsPage() {
   }
 
   const service = createServiceRoleClient();
-  const pending = await Promise.all(
+  let pending = await Promise.all(
     (pendingRows ?? []).map(async (row) => {
       const p = row as unknown as PendingChangeRow;
       let submitter_email = "—";
@@ -65,18 +87,27 @@ export default async function AdminWorkflowsPage() {
     }),
   );
 
+  if (!superUser) {
+    pending = pending.filter((p) => allowedActionTypes.has(p.action_type));
+  }
+
+  const isDesignatedApproverOnly = !superUser && designatedApprover;
+
   return (
     <div className="p-6 md:p-8">
       <h1 className="font-sans text-2xl font-semibold text-[#1a1a2e]">Approval Workflows</h1>
       <p className="mt-1 max-w-2xl font-sans text-sm text-[#888888]">
-        Configure which actions require approval before taking effect, and who approves them.
+        {isDesignatedApproverOnly
+          ? "Review pending approvals assigned to your role. Workflow configuration is managed by Super Admins."
+          : "Configure which actions require approval before taking effect, and who approves them."}
       </p>
 
       <div className="mt-8">
         <WorkflowsClient
-          workflows={(workflows ?? []) as unknown as ApprovalWorkflowRow[]}
-          roles={roleRows as unknown as Role[]}
+          workflows={workflowsClientPayload}
+          roles={rolesForClient}
           pending={pending}
+          isDesignatedApproverOnly={isDesignatedApproverOnly}
         />
       </div>
     </div>

@@ -18,6 +18,7 @@ import { useEffect, useState } from "react";
 export interface AdminShellProps {
   user: { id: string; email: string };
   roles: Role[];
+  approvalsNav?: { show: boolean; pendingCount: number };
   children: ReactNode;
 }
 
@@ -172,7 +173,7 @@ function isNavActive(pathname: string, href: string) {
   return pathname.startsWith(`${href}/`);
 }
 
-type NavItem = { href: string; label: string; icon: ReactNode };
+type NavItem = { href: string; label: string; icon: ReactNode; badgeCount?: number };
 
 function NavSection({ label, items, pathname }: { label: string; items: NavItem[]; pathname: string }) {
   if (items.length === 0) return null;
@@ -182,9 +183,16 @@ function NavSection({ label, items, pathname }: { label: string; items: NavItem[
       <ul className="space-y-0.5">
         {items.map((item) => (
           <li key={item.href}>
-            <Link href={item.href} className={navLinkClass(isNavActive(pathname, item.href))}>
-              {item.icon}
-              {item.label}
+            <Link href={item.href} className={[navLinkClass(isNavActive(pathname, item.href)), "justify-between"].join(" ")}>
+              <span className="flex min-w-0 items-center gap-3">
+                {item.icon}
+                <span className="truncate">{item.label}</span>
+              </span>
+              {item.badgeCount != null && item.badgeCount > 0 ? (
+                <span className="shrink-0 rounded-full bg-[var(--color-gold)] px-2 py-0.5 font-sans text-[10px] font-semibold tabular-nums text-[var(--color-navy)]">
+                  {item.badgeCount > 99 ? "99+" : item.badgeCount}
+                </span>
+              ) : null}
             </Link>
           </li>
         ))}
@@ -233,7 +241,12 @@ function hasAnyAiLeadsPermission(r: Role[]) {
   return ["view", "create", "edit", "delete"].some((a) => hasPermission(r, "ai_leads", a));
 }
 
-export function AdminShell({ user, roles, children }: AdminShellProps) {
+export function AdminShell({
+  user,
+  roles,
+  children,
+  approvalsNav = { show: false, pendingCount: 0 },
+}: AdminShellProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -284,11 +297,16 @@ export function AdminShell({ user, roles, children }: AdminShellProps) {
   if (hasPermission(roles, "users", "view") || isSuperAdmin(roles)) {
     systemItems.push({ href: "/admin/users", label: "Users & Roles", icon: <IconUsers /> });
   }
+  if (approvalsNav.show) {
+    systemItems.push({
+      href: "/admin/workflows",
+      label: "Approval Workflows",
+      icon: <IconWorkflows />,
+      ...(approvalsNav.pendingCount > 0 ? { badgeCount: approvalsNav.pendingCount } : {}),
+    });
+  }
   if (isSuperAdmin(roles)) {
-    systemItems.push(
-      { href: "/admin/workflows", label: "Approval Workflows", icon: <IconWorkflows /> },
-      { href: "/admin/settings", label: "Settings", icon: <IconSettings /> },
-    );
+    systemItems.push({ href: "/admin/settings", label: "Settings", icon: <IconSettings /> });
   }
   if (hasPermission(roles, "audit_log", "view")) {
     systemItems.push({ href: "/admin/audit-log", label: "Audit Log", icon: <IconAudit /> });
