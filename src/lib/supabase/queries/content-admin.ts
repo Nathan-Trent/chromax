@@ -1,13 +1,15 @@
 import { createClient } from "@/lib/supabase/server";
 import type { ContentPageRow } from "@/types/content-page";
 
-const KNOWN_KEYS = ["homepage", "about", "contact"] as const;
+const KNOWN_KEYS = ["homepage", "about", "contact", "projects", "certifications"] as const;
 
 export function displayTitleForPageKey(pageKey: string): string {
   const map: Record<string, string> = {
     homepage: "Homepage",
     about: "About",
     contact: "Contact",
+    projects: "Projects",
+    certifications: "Certifications",
   };
   return map[pageKey] ?? pageKey.charAt(0).toUpperCase() + pageKey.slice(1);
 }

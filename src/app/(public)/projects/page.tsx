@@ -1,70 +1,69 @@
 import { PageHeader } from "@/components/public/PageHeader";
-import {
-  ProjectFilters,
-  type ProjectListItem,
-} from "@/components/public/ProjectFilters";
+import { ProjectFilters } from "@/components/public/ProjectFilters";
+import { ProjectsListingGrid } from "@/components/public/ProjectsListingGrid";
+import { mergeProjectsPageContent } from "@/lib/content/projects-page";
+import { getLiveContentPage } from "@/lib/supabase/queries/content-public";
+import { getPublicProjects, getPublicProjectSectors } from "@/lib/supabase/queries/projects-public";
+import { Suspense } from "react";
 
-const PROJECTS: ProjectListItem[] = [
-  {
-    id: "1",
-    title: "Lagos Port Authority Berth Protection",
-    sector: "offshore",
-    location: "Lagos, Nigeria",
-    description:
-      "Anti-corrosion coating system for steel berth structures in saltwater environment. 12,000 m² surface area.",
-  },
-  {
-    id: "2",
-    title: "Eko Atlantic Tower Exterior",
-    sector: "construction",
-    location: "Lagos, Nigeria",
-    description:
-      "Architectural coating system for luxury high-rise exterior. Weather-resistant topcoat with 15-year guarantee.",
-  },
-  {
-    id: "3",
-    title: "Fleet Refinish — Dangote Transport",
-    sector: "automotive",
-    location: "Lagos, Nigeria",
-    description:
-      "Full fleet refinish for 40-vehicle logistics fleet. Colour-matched corporate livery in ChromaGloss 2K.",
-  },
-  {
-    id: "4",
-    title: "MV Excellence Hull Treatment",
-    sector: "marine",
-    location: "Apapa, Lagos",
-    description:
-      "Anti-fouling and hull protection system for commercial cargo vessel. Applied during scheduled dry-dock.",
-  },
-  {
-    id: "5",
-    title: "Lekki-Epe Expressway Infrastructure",
-    sector: "infrastructure",
-    location: "Lagos, Nigeria",
-    description:
-      "Bridge structure and barrier coating for 14km highway infrastructure project. Zinc-rich primer system.",
-  },
-  {
-    id: "6",
-    title: "Warri Refinery Maintenance Coating",
-    sector: "offshore",
-    location: "Warri, Nigeria",
-    description:
-      "Maintenance coating programme for refinery process equipment and structural steelwork.",
-  },
-];
+type SearchProps = {
+  sector?: string;
+};
 
-export default function ProjectsPage() {
+async function EmptyState({ title, body }: { title: string; body: string }) {
+  return (
+    <section className="bg-[#F5F0E8] py-20">
+      <div className="mx-auto max-w-[1280px] px-4 text-center sm:px-6 lg:px-8">
+        <p className="font-[family-name:var(--font-fraunces)] text-2xl font-semibold text-[#1a1a2e]">{title}</p>
+        <p className="mx-auto mt-3 max-w-md font-sans text-[15px] text-[#666666]">{body}</p>
+      </div>
+    </section>
+  );
+}
+
+export default async function ProjectsPage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchProps>;
+}) {
+  const sp = await searchParams;
+  const sectorFilter = sp.sector?.trim() || undefined;
+
+  const [projects, sectors, cmsRow] = await Promise.all([
+    getPublicProjects(sectorFilter),
+    getPublicProjectSectors(),
+    getLiveContentPage("projects"),
+  ]);
+
+  const cms = mergeProjectsPageContent(
+    cmsRow?.content as Record<string, unknown> | undefined,
+  );
+
+  const showFilters = sectors.length > 0;
+  const isEmpty = projects.length === 0;
+
   return (
     <>
       <PageHeader
         variant="charcoal"
-        badge="Projects"
-        heading="Built to last in the real world"
-        subtext="Case studies across offshore, marine, construction, automotive and infrastructure — specified and applied across Nigeria."
+        badge={cms.page_badge}
+        heading={cms.page_heading}
+        subtext={cms.page_subtext}
       />
-      <ProjectFilters projects={PROJECTS} />
+
+      {showFilters ? (
+        <Suspense
+          fallback={<div className="sticky top-16 z-30 h-[52px] border-b border-[#E0DED4] bg-white" />}
+        >
+          <ProjectFilters sectors={sectors} />
+        </Suspense>
+      ) : null}
+
+      {isEmpty ? (
+        <EmptyState title={cms.empty_title} body={cms.empty_body} />
+      ) : (
+        <ProjectsListingGrid projects={projects} cardCtaLabel={cms.card_cta_label} />
+      )}
     </>
   );
 }

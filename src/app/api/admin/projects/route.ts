@@ -2,6 +2,7 @@ import { writeAuditLog } from "@/lib/audit/write-audit-log";
 import { getAdminRequestContext, roleNamesCsv } from "@/lib/auth/admin-api";
 import { hasPermission } from "@/lib/auth/permissions";
 import { adminProjectCreateSchema } from "@/lib/schemas/admin-cms";
+import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
@@ -61,6 +62,12 @@ export async function POST(request: Request) {
     afterValues: project,
     source: "dashboard",
   });
+
+  revalidatePath("/projects");
+  const slug = typeof project.slug === "string" ? project.slug : "";
+  if (slug) {
+    revalidatePath(`/projects/${slug}`);
+  }
 
   return NextResponse.json({ data: { project } });
 }

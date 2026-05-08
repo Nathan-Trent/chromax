@@ -10,6 +10,8 @@ function revalidatePublicContent() {
   revalidatePath("/", "layout");
   revalidatePath("/about");
   revalidatePath("/contact");
+  revalidatePath("/projects");
+  revalidatePath("/certifications");
   revalidatePath("/admin/content", "layout");
 }
 

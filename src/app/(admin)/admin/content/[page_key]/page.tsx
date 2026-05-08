@@ -53,6 +53,7 @@ export default async function AdminContentEditPage({ params }: Props) {
       </h1>
       <div className="mt-8 max-w-3xl">
         <ContentEditor
+          key={page_key}
           pageKey={page_key}
           initialContent={content}
           initialStatus={page.status as ContentPageStatus}

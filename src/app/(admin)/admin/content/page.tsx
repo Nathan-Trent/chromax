@@ -12,7 +12,7 @@ import type { Role } from "@/types/role";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-const KEYS = ["homepage", "about", "contact"] as const;
+const KEYS = ["homepage", "about", "contact", "projects", "certifications"] as const;
 
 function formatDate(iso: string): string {
   try {

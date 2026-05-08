@@ -5,7 +5,9 @@ import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Toast } from "@/components/ui/Toast";
 import { useAlertDialog } from "@/components/ui/useAlertDialog";
+import { mergeCertificationsPageContent, type CertificationsPageContent } from "@/lib/content/certifications-page";
 import { mergeHomepageContent, type HomepageContent } from "@/lib/content/homepage";
+import { mergeProjectsPageContent, type ProjectsPageContent } from "@/lib/content/projects-page";
 import type { ContentPageStatus } from "@/types/content-page";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, type Dispatch, type SetStateAction } from "react";
@@ -228,6 +230,9 @@ export function ContentEditor({ pageKey, initialContent, initialStatus }: Conten
   const [email, setEmail] = useState(str(initialContent.email));
   const [whatsapp, setWhatsapp] = useState(str(initialContent.whatsapp));
 
+  const [projPage, setProjPage] = useState(() => mergeProjectsPageContent(initialContent));
+  const [certPage, setCertPage] = useState(() => mergeCertificationsPageContent(initialContent));
+
   const [jsonRaw, setJsonRaw] = useState(() =>
     JSON.stringify(initialContent && Object.keys(initialContent).length ? initialContent : {}, null, 2),
   );
@@ -242,6 +247,8 @@ export function ContentEditor({ pageKey, initialContent, initialStatus }: Conten
     if (pageKey === "homepage") return "homepage" as const;
     if (pageKey === "about") return "about" as const;
     if (pageKey === "contact") return "contact" as const;
+    if (pageKey === "projects") return "projects" as const;
+    if (pageKey === "certifications") return "certifications" as const;
     return "generic" as const;
   }, [pageKey]);
 
@@ -268,6 +275,20 @@ export function ContentEditor({ pageKey, initialContent, initialStatus }: Conten
         email: email.trim(),
         whatsapp: whatsapp.trim(),
       };
+    }
+    if (mode === "projects") {
+      const trimmed = { ...projPage };
+      for (const k of Object.keys(trimmed) as (keyof ProjectsPageContent)[]) {
+        trimmed[k] = trimmed[k].trim();
+      }
+      return { ...initialContent, ...trimmed };
+    }
+    if (mode === "certifications") {
+      const trimmed = { ...certPage };
+      for (const k of Object.keys(trimmed) as (keyof CertificationsPageContent)[]) {
+        trimmed[k] = trimmed[k].trim();
+      }
+      return { ...initialContent, ...trimmed };
     }
     try {
       const parsed = JSON.parse(jsonRaw) as Record<string, unknown>;
@@ -305,6 +326,22 @@ export function ContentEditor({ pageKey, initialContent, initialStatus }: Conten
         whatsapp: str(initialContent.whatsapp).trim(),
       };
     }
+    if (pageKey === "projects") {
+      const m = mergeProjectsPageContent(initialContent);
+      const t = { ...m };
+      for (const k of Object.keys(t) as (keyof ProjectsPageContent)[]) {
+        t[k] = t[k].trim();
+      }
+      return { ...initialContent, ...t };
+    }
+    if (pageKey === "certifications") {
+      const m = mergeCertificationsPageContent(initialContent);
+      const t = { ...m };
+      for (const k of Object.keys(t) as (keyof CertificationsPageContent)[]) {
+        t[k] = t[k].trim();
+      }
+      return { ...initialContent, ...t };
+    }
     const raw = initialContent && Object.keys(initialContent).length ? initialContent : {};
     return JSON.parse(JSON.stringify(raw)) as Record<string, unknown>;
   }, [pageKey, initialContent]);
@@ -333,6 +370,8 @@ export function ContentEditor({ pageKey, initialContent, initialStatus }: Conten
     address,
     email,
     whatsapp,
+    projPage,
+    certPage,
     initialContent,
   ]);
 
@@ -452,6 +491,157 @@ export function ContentEditor({ pageKey, initialContent, initialStatus }: Conten
             <Input label="Address" value={address} onChange={(e) => setAddress(e.target.value)} />
             <Input label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
             <Input label="WhatsApp number" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} />
+          </div>
+        ) : null}
+
+        {mode === "projects" ? (
+          <div className="space-y-8">
+            <div className="space-y-4">
+              <p className="mb-2 font-sans text-[11px] font-medium uppercase tracking-widest text-[#888]">
+                Page header
+              </p>
+              <Input
+                label="Badge"
+                value={projPage.page_badge}
+                onChange={(e) => setProjPage((p) => ({ ...p, page_badge: e.target.value }))}
+              />
+              <Input
+                label="Heading"
+                value={projPage.page_heading}
+                onChange={(e) => setProjPage((p) => ({ ...p, page_heading: e.target.value }))}
+              />
+              <div>
+                <label className="mb-1.5 block font-sans text-[13px] font-medium text-[#333]">Subtext</label>
+                <textarea
+                  value={projPage.page_subtext}
+                  onChange={(e) => setProjPage((p) => ({ ...p, page_subtext: e.target.value }))}
+                  rows={3}
+                  className={area}
+                />
+              </div>
+            </div>
+            <div className="space-y-4">
+              <p className="mb-2 font-sans text-[11px] font-medium uppercase tracking-widest text-[#888]">
+                Project cards
+              </p>
+              <Input
+                label="Card CTA label"
+                value={projPage.card_cta_label}
+                onChange={(e) => setProjPage((p) => ({ ...p, card_cta_label: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-4">
+              <p className="mb-2 font-sans text-[11px] font-medium uppercase tracking-widest text-[#888]">
+                Empty state
+              </p>
+              <Input
+                label="Title"
+                value={projPage.empty_title}
+                onChange={(e) => setProjPage((p) => ({ ...p, empty_title: e.target.value }))}
+              />
+              <div>
+                <label className="mb-1.5 block font-sans text-[13px] font-medium text-[#333]">Body</label>
+                <textarea
+                  value={projPage.empty_body}
+                  onChange={(e) => setProjPage((p) => ({ ...p, empty_body: e.target.value }))}
+                  rows={3}
+                  className={area}
+                />
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {mode === "certifications" ? (
+          <div className="space-y-8">
+            <div className="space-y-4">
+              <p className="mb-2 font-sans text-[11px] font-medium uppercase tracking-widest text-[#888]">
+                Page header
+              </p>
+              <Input
+                label="Badge"
+                value={certPage.page_badge}
+                onChange={(e) => setCertPage((p) => ({ ...p, page_badge: e.target.value }))}
+              />
+              <Input
+                label="Heading"
+                value={certPage.page_heading}
+                onChange={(e) => setCertPage((p) => ({ ...p, page_heading: e.target.value }))}
+              />
+              <div>
+                <label className="mb-1.5 block font-sans text-[13px] font-medium text-[#333]">Subtext</label>
+                <textarea
+                  value={certPage.page_subtext}
+                  onChange={(e) => setCertPage((p) => ({ ...p, page_subtext: e.target.value }))}
+                  rows={3}
+                  className={area}
+                />
+              </div>
+            </div>
+            <div className="space-y-4">
+              <p className="mb-2 font-sans text-[11px] font-medium uppercase tracking-widest text-[#888]">
+                Section headings
+              </p>
+              <Input
+                label="ISO section"
+                value={certPage.section_iso_heading}
+                onChange={(e) => setCertPage((p) => ({ ...p, section_iso_heading: e.target.value }))}
+              />
+              <Input
+                label="Export licences section"
+                value={certPage.section_licence_heading}
+                onChange={(e) => setCertPage((p) => ({ ...p, section_licence_heading: e.target.value }))}
+              />
+              <Input
+                label="MSDS section"
+                value={certPage.section_msds_heading}
+                onChange={(e) => setCertPage((p) => ({ ...p, section_msds_heading: e.target.value }))}
+              />
+              <Input
+                label="Awards section"
+                value={certPage.section_awards_heading}
+                onChange={(e) => setCertPage((p) => ({ ...p, section_awards_heading: e.target.value }))}
+              />
+              <Input
+                label="Other section"
+                value={certPage.section_other_heading}
+                onChange={(e) => setCertPage((p) => ({ ...p, section_other_heading: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-4">
+              <p className="mb-2 font-sans text-[11px] font-medium uppercase tracking-widest text-[#888]">
+                Labels
+              </p>
+              <Input
+                label="Download link label"
+                value={certPage.download_label}
+                onChange={(e) => setCertPage((p) => ({ ...p, download_label: e.target.value }))}
+              />
+              <Input
+                label="No document label"
+                value={certPage.no_doc_label}
+                onChange={(e) => setCertPage((p) => ({ ...p, no_doc_label: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-4">
+              <p className="mb-2 font-sans text-[11px] font-medium uppercase tracking-widest text-[#888]">
+                Empty state
+              </p>
+              <Input
+                label="Title"
+                value={certPage.empty_title}
+                onChange={(e) => setCertPage((p) => ({ ...p, empty_title: e.target.value }))}
+              />
+              <div>
+                <label className="mb-1.5 block font-sans text-[13px] font-medium text-[#333]">Body</label>
+                <textarea
+                  value={certPage.empty_body}
+                  onChange={(e) => setCertPage((p) => ({ ...p, empty_body: e.target.value }))}
+                  rows={3}
+                  className={area}
+                />
+              </div>
+            </div>
           </div>
         ) : null}
 

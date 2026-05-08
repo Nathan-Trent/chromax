@@ -2,6 +2,7 @@ import { writeAuditLog } from "@/lib/audit/write-audit-log";
 import { getAdminRequestContext, roleNamesCsv } from "@/lib/auth/admin-api";
 import { hasPermission } from "@/lib/auth/permissions";
 import { adminCertCreateSchema } from "@/lib/schemas/admin-cms";
+import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
@@ -62,6 +63,8 @@ export async function POST(request: Request) {
     afterValues: certification,
     source: "dashboard",
   });
+
+  revalidatePath("/certifications");
 
   return NextResponse.json({ data: { certification } });
 }
