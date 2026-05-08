@@ -1,4 +1,4 @@
-import { getLiveContentPage } from "@/lib/supabase/queries/content-public";
+/** Types and merge helpers — safe for Client Components (no server imports). */
 
 export interface ContactPageContent {
   contact_page_badge: string;
@@ -40,15 +40,4 @@ export function mergeContactPageContent(
     }
   }
   return out;
-}
-
-export async function getContactPageContent(): Promise<ContactPageContent> {
-  try {
-    const row = await getLiveContentPage("contact");
-    if (!row) return { ...CONTACT_PAGE_DEFAULTS };
-    const content = row.content as Record<string, unknown> | undefined;
-    return mergeContactPageContent(content);
-  } catch {
-    return { ...CONTACT_PAGE_DEFAULTS };
-  }
 }

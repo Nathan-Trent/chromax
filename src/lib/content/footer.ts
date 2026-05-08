@@ -1,4 +1,4 @@
-import { getLiveContentPage } from "@/lib/supabase/queries/content-public";
+/** Types and merge helpers — safe for Client Components (no server imports). */
 
 export interface FooterContent {
   tagline: string;
@@ -30,15 +30,4 @@ export function mergeFooterContent(raw: Record<string, unknown> | null | undefin
     }
   }
   return out;
-}
-
-export async function getFooterContent(): Promise<FooterContent> {
-  try {
-    const row = await getLiveContentPage("footer");
-    if (!row) return { ...FOOTER_DEFAULTS };
-    const content = row.content as Record<string, unknown> | undefined;
-    return mergeFooterContent(content);
-  } catch {
-    return { ...FOOTER_DEFAULTS };
-  }
 }

@@ -1,6 +1,6 @@
 import { ContactForm } from "@/components/public/ContactForm";
 import { PageHeader } from "@/components/public/PageHeader";
-import { getContactPageContent } from "@/lib/content/contact-page";
+import { getContactPageContent } from "@/lib/supabase/queries/content-public";
 
 function waHref(num: string): string {
   const digits = num.replace(/\D/g, "");

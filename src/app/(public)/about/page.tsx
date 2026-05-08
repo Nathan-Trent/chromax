@@ -1,6 +1,6 @@
 import { AboutStatsStrip } from "@/components/public/about/AboutStatsStrip";
 import { PageHeader } from "@/components/public/PageHeader";
-import { getAboutContent } from "@/lib/content/about";
+import { getAboutContent } from "@/lib/supabase/queries/content-public";
 import { ScrollReveal } from "@/lib/animations/useScrollReveal";
 import Link from "next/link";
 import { Fragment } from "react";

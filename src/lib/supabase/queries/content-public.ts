@@ -1,11 +1,26 @@
-import { createClient } from "@/lib/supabase/server";
+import {
+  ABOUT_DEFAULTS,
+  mergeAboutContent,
+  type AboutContent,
+} from "@/lib/content/about";
+import {
+  CONTACT_PAGE_DEFAULTS,
+  mergeContactPageContent,
+  type ContactPageContent,
+} from "@/lib/content/contact-page";
+import {
+  FOOTER_DEFAULTS,
+  mergeFooterContent,
+  type FooterContent,
+} from "@/lib/content/footer";
 import { HOMEPAGE_DEFAULTS, mergeHomepageContent, type HomepageContent } from "@/lib/content/homepage";
+import { createClient } from "@/lib/supabase/server";
 import type { ContentPageRow } from "@/types/content-page";
 import type { Product } from "@/lib/supabase/queries/products";
 import { PUBLIC_PRODUCT_COLUMNS } from "@/lib/supabase/queries/products";
 
-export type { HomepageContent };
-export { HOMEPAGE_DEFAULTS };
+export type { AboutContent, ContactPageContent, FooterContent, HomepageContent };
+export { ABOUT_DEFAULTS, CONTACT_PAGE_DEFAULTS, FOOTER_DEFAULTS, HOMEPAGE_DEFAULTS };
 
 /** Live content visible to anonymous visitors (RLS: status = live). */
 export async function getLiveContentPage(pageKey: string): Promise<ContentPageRow | null> {
@@ -33,6 +48,39 @@ export async function getHomepageContent(): Promise<HomepageContent> {
   if (!row) return { ...HOMEPAGE_DEFAULTS };
   const content = row.content as Record<string, unknown> | undefined;
   return mergeHomepageContent(content);
+}
+
+export async function getAboutContent(): Promise<AboutContent> {
+  try {
+    const row = await getLiveContentPage("about");
+    if (!row) return { ...ABOUT_DEFAULTS };
+    const content = row.content as Record<string, unknown> | undefined;
+    return mergeAboutContent(content);
+  } catch {
+    return { ...ABOUT_DEFAULTS };
+  }
+}
+
+export async function getFooterContent(): Promise<FooterContent> {
+  try {
+    const row = await getLiveContentPage("footer");
+    if (!row) return { ...FOOTER_DEFAULTS };
+    const content = row.content as Record<string, unknown> | undefined;
+    return mergeFooterContent(content);
+  } catch {
+    return { ...FOOTER_DEFAULTS };
+  }
+}
+
+export async function getContactPageContent(): Promise<ContactPageContent> {
+  try {
+    const row = await getLiveContentPage("contact");
+    if (!row) return { ...CONTACT_PAGE_DEFAULTS };
+    const content = row.content as Record<string, unknown> | undefined;
+    return mergeContactPageContent(content);
+  } catch {
+    return { ...CONTACT_PAGE_DEFAULTS };
+  }
 }
 
 export async function getFeaturedProducts(limit = 4): Promise<Product[]> {

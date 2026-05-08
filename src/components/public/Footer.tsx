@@ -1,4 +1,4 @@
-import { getFooterContent } from "@/lib/content/footer";
+import { getFooterContent } from "@/lib/supabase/queries/content-public";
 import Image from "next/image";
 import Link from "next/link";
 
