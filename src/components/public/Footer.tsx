@@ -1,3 +1,4 @@
+import { getFooterContent } from "@/lib/content/footer";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -30,7 +31,9 @@ function footerLinkClass() {
   return "mb-2 block min-h-11 rounded py-3 font-sans text-sm text-[rgba(255,255,255,0.65)] transition-colors duration-150 ease-in-out motion-reduce:transition-none hover:text-white sm:min-h-0 sm:p-0 sm:text-[13px]";
 }
 
-export function Footer() {
+export async function Footer() {
+  const cms = await getFooterContent();
+
   return (
     <footer className="w-full overflow-x-hidden bg-[#1a1a2e] pt-12 pb-10 sm:pt-16 sm:pb-12">
       <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-8">
@@ -38,16 +41,16 @@ export function Footer() {
           <div className="w-full sm:col-span-2 lg:col-span-1 lg:max-w-md">
             <LogoBlock />
             <p className="mt-4 max-w-xs font-sans text-sm leading-relaxed text-[rgba(255,255,255,0.5)] sm:text-[14px]">
-              Engineered for precision. Built for the world.
+              {cms.tagline}
             </p>
             <p className="mt-2 font-sans text-sm text-[rgba(255,255,255,0.4)] sm:text-[12px]">
-              Ikotun, Lagos, Nigeria
+              {cms.address_line}
             </p>
           </div>
 
           <div>
             <p className="mb-4 font-sans text-sm font-medium uppercase tracking-widest text-[rgba(255,255,255,0.4)] sm:text-[11px]">
-              Products
+              {cms.products_column_heading}
             </p>
             <Link href="/products?category=industrial" className={footerLinkClass()}>
               Industrial Coatings
@@ -68,7 +71,7 @@ export function Footer() {
 
           <div>
             <p className="mb-4 font-sans text-sm font-medium uppercase tracking-widest text-[rgba(255,255,255,0.4)] sm:text-[11px]">
-              Company
+              {cms.company_column_heading}
             </p>
             <Link href="/about" className={footerLinkClass()}>
               About Us
@@ -86,18 +89,16 @@ export function Footer() {
               Contact
             </Link>
             <p className="mt-6 font-sans text-sm text-[rgba(255,255,255,0.35)] sm:text-[11px]">
-              UK · USA · Ukraine
+              {cms.regions_line}
             </p>
           </div>
         </div>
 
         <div className="mt-10 flex flex-col justify-between gap-4 border-t border-white/10 pt-6 sm:mt-12 sm:flex-row sm:items-center">
           <p className="font-sans text-sm text-[rgba(255,255,255,0.35)] sm:text-[12px]">
-            © {new Date().getFullYear()} Chromax-MCR. All rights reserved.
+            © {new Date().getFullYear()} {cms.copyright_suffix}
           </p>
-          <p className="font-sans text-sm text-[rgba(255,255,255,0.35)] sm:text-[12px]">
-            Made in Lagos · Trusted worldwide
-          </p>
+          <p className="font-sans text-sm text-[rgba(255,255,255,0.35)] sm:text-[12px]">{cms.bottom_tagline}</p>
         </div>
       </div>
     </footer>

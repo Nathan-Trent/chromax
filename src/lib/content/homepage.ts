@@ -21,6 +21,21 @@ export interface HomepageContent {
   categories_label: string;
   categories_heading: string;
   categories_subtext: string;
+  cat_industrial_name: string;
+  cat_industrial_desc: string;
+  cat_industrial_emoji: string;
+  cat_marine_name: string;
+  cat_marine_desc: string;
+  cat_marine_emoji: string;
+  cat_automotive_name: string;
+  cat_automotive_desc: string;
+  cat_automotive_emoji: string;
+  cat_architectural_name: string;
+  cat_architectural_desc: string;
+  cat_architectural_emoji: string;
+  cat_custom_name: string;
+  cat_custom_desc: string;
+  cat_custom_emoji: string;
   products_label: string;
   products_heading: string;
   products_subtext: string;
@@ -84,6 +99,21 @@ export const HOMEPAGE_DEFAULTS: HomepageContent = {
   categories_heading: "Coatings for every application",
   categories_subtext:
     "From marine-grade epoxy to architectural finishes — formulated and manufactured in Lagos.",
+  cat_industrial_name: "Industrial",
+  cat_industrial_desc: "Machinery & infrastructure",
+  cat_industrial_emoji: "⚙️",
+  cat_marine_name: "Marine",
+  cat_marine_desc: "Vessels & offshore",
+  cat_marine_emoji: "⚓",
+  cat_automotive_name: "Automotive",
+  cat_automotive_desc: "Premium finishes",
+  cat_automotive_emoji: "🚗",
+  cat_architectural_name: "Architectural",
+  cat_architectural_desc: "Walls & buildings",
+  cat_architectural_emoji: "🏠",
+  cat_custom_name: "Custom",
+  cat_custom_desc: "Bespoke formulations",
+  cat_custom_emoji: "🧪",
   products_label: "Our products",
   products_heading: "Built for industry",
   products_subtext:

@@ -172,6 +172,23 @@ export default async function HomePage() {
         label={content.categories_label}
         heading={content.categories_heading}
         subtext={content.categories_subtext}
+        cards={{
+          cat_industrial_name: content.cat_industrial_name,
+          cat_industrial_desc: content.cat_industrial_desc,
+          cat_industrial_emoji: content.cat_industrial_emoji,
+          cat_marine_name: content.cat_marine_name,
+          cat_marine_desc: content.cat_marine_desc,
+          cat_marine_emoji: content.cat_marine_emoji,
+          cat_automotive_name: content.cat_automotive_name,
+          cat_automotive_desc: content.cat_automotive_desc,
+          cat_automotive_emoji: content.cat_automotive_emoji,
+          cat_architectural_name: content.cat_architectural_name,
+          cat_architectural_desc: content.cat_architectural_desc,
+          cat_architectural_emoji: content.cat_architectural_emoji,
+          cat_custom_name: content.cat_custom_name,
+          cat_custom_desc: content.cat_custom_desc,
+          cat_custom_emoji: content.cat_custom_emoji,
+        }}
       />
       <FeaturedProductsSection content={productsContent} products={featuredProducts} />
       <AboutSection content={aboutContent} />

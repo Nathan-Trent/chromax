@@ -1,9 +1,6 @@
 import { ContactForm } from "@/components/public/ContactForm";
 import { PageHeader } from "@/components/public/PageHeader";
-import { getLiveContentPage, strFromContent } from "@/lib/supabase/queries/content-public";
-
-const DEFAULT_ADDRESS = "Ikotun, Lagos, Nigeria";
-const DEFAULT_EMAIL = "info@chromax-mcr.com";
+import { getContactPageContent } from "@/lib/content/contact-page";
 
 function waHref(num: string): string {
   const digits = num.replace(/\D/g, "");
@@ -11,19 +8,16 @@ function waHref(num: string): string {
 }
 
 export default async function ContactPage() {
-  const row = await getLiveContentPage("contact");
-  const content = row?.content as Record<string, unknown> | undefined;
+  const cms = await getContactPageContent();
 
-  const address = strFromContent(content, "address", DEFAULT_ADDRESS);
-  const email = strFromContent(content, "email", DEFAULT_EMAIL);
-  const whatsappRaw = typeof content?.whatsapp === "string" ? content.whatsapp.trim() : "";
+  const whatsappRaw = cms.whatsapp.trim();
 
   return (
     <>
       <PageHeader
-        badge="Get in touch"
-        heading="We’re here to help"
-        subtext="Quotes, technical questions, bulk orders — message us and we’ll respond within one business day."
+        badge={cms.contact_page_badge}
+        heading={cms.contact_page_heading}
+        subtext={cms.contact_page_subtext}
       />
 
       <div className="bg-[#F5F0E8] py-16">
@@ -40,7 +34,7 @@ export default async function ContactPage() {
                 <p className="font-sans text-[11px] font-medium uppercase tracking-widest text-[#888]">
                   Address
                 </p>
-                <p className="mt-1 font-sans text-lg font-medium text-[#1a1a2e]">{address}</p>
+                <p className="mt-1 font-sans text-lg font-medium text-[#1a1a2e]">{cms.address}</p>
               </div>
             </div>
             <div className="mb-8 flex gap-4">
@@ -55,10 +49,10 @@ export default async function ContactPage() {
                   Email
                 </p>
                 <a
-                  href={`mailto:${email}`}
+                  href={`mailto:${cms.email}`}
                   className="mt-1 inline-block font-sans text-lg font-medium text-[#E8A020] underline-offset-2 transition duration-150 hover:underline motion-reduce:transition-none"
                 >
-                  {email}
+                  {cms.email}
                 </a>
               </div>
             </div>
@@ -94,22 +88,17 @@ export default async function ContactPage() {
               </span>
               <div>
                 <p className="font-sans text-[11px] font-medium uppercase tracking-widest text-[#888]">
-                  Serving
+                  {cms.contact_serving_heading}
                 </p>
-                <p className="mt-1 font-sans text-lg font-medium text-[#666]">
-                  Nigeria, UK, USA and Ukraine
-                </p>
+                <p className="mt-1 font-sans text-lg font-medium text-[#666]">{cms.contact_regions}</p>
               </div>
             </div>
 
             <div className="rounded-xl bg-[#1a1a2e] p-6 text-white">
               <p className="font-sans text-[13px] font-semibold uppercase tracking-widest text-[#E8A020]">
-                International enquiries
+                {cms.contact_intl_heading}
               </p>
-              <p className="mt-3 font-sans text-sm leading-relaxed text-white/60">
-                For orders from the UK, USA or Ukraine, include your country and preferred currency. We&apos;ll
-                respond within 1 business day.
-              </p>
+              <p className="mt-3 font-sans text-sm leading-relaxed text-white/60">{cms.contact_intl_body}</p>
               <div className="mt-6 grid grid-cols-4 gap-3 text-center">
                 {[
                   { f: "🇳🇬", n: "Nigeria" },

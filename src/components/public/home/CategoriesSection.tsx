@@ -1,69 +1,50 @@
 "use client";
 
 import { ScrollReveal, useScrollReveal } from "@/lib/animations/useScrollReveal";
+import type { HomepageContent } from "@/lib/content/homepage";
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
+export type CategoriesCardsContent = Pick<
+  HomepageContent,
+  | "cat_industrial_name"
+  | "cat_industrial_desc"
+  | "cat_industrial_emoji"
+  | "cat_marine_name"
+  | "cat_marine_desc"
+  | "cat_marine_emoji"
+  | "cat_automotive_name"
+  | "cat_automotive_desc"
+  | "cat_automotive_emoji"
+  | "cat_architectural_name"
+  | "cat_architectural_desc"
+  | "cat_architectural_emoji"
+  | "cat_custom_name"
+  | "cat_custom_desc"
+  | "cat_custom_emoji"
+>;
 
 export interface CategoriesSectionProps {
   label: string;
   heading: string;
   subtext: string;
+  cards: CategoriesCardsContent;
 }
-
-const CATEGORIES = [
-  {
-    id: "industrial",
-    name: "Industrial",
-    desc: "Machinery & infrastructure",
-    icon: "⚙️",
-    color: "#185FA5",
-    lightColor: "#E6F1FB",
-    href: "/products?category=industrial",
-  },
-  {
-    id: "marine",
-    name: "Marine",
-    desc: "Vessels & offshore",
-    icon: "⚓",
-    color: "#0F6E56",
-    lightColor: "#E1F5EE",
-    href: "/products?category=marine",
-  },
-  {
-    id: "automotive",
-    name: "Automotive",
-    desc: "Premium finishes",
-    icon: "🚗",
-    color: "#993C1D",
-    lightColor: "#FAECE7",
-    href: "/products?category=automotive",
-  },
-  {
-    id: "architectural",
-    name: "Architectural",
-    desc: "Walls & buildings",
-    icon: "🏠",
-    color: "#BA7517",
-    lightColor: "#FAEEDA",
-    href: "/products?category=architectural",
-  },
-  {
-    id: "custom",
-    name: "Custom",
-    desc: "Bespoke formulations",
-    icon: "🧪",
-    color: "#534AB7",
-    lightColor: "#EEEDFE",
-    href: "/products?category=custom",
-  },
-] as const;
 
 function CategoryCard({
   cat,
   delayMs,
   tiltEnabled,
 }: {
-  cat: (typeof CATEGORIES)[number];
+  cat: {
+    id: string;
+    name: string;
+    desc: string;
+    icon: string;
+    color: string;
+    lightColor: string;
+    href: string;
+  };
   delayMs: number;
   tiltEnabled: boolean;
 }) {
@@ -132,7 +113,7 @@ function CategoryCard({
   );
 }
 
-export function CategoriesSection({ label, heading, subtext }: CategoriesSectionProps) {
+export function CategoriesSection({ label, heading, subtext, cards }: CategoriesSectionProps) {
   const [tilt, setTilt] = useState(false);
 
   useEffect(() => {
@@ -142,6 +123,58 @@ export function CategoriesSection({ label, heading, subtext }: CategoriesSection
     mq.addEventListener("change", apply);
     return () => mq.removeEventListener("change", apply);
   }, []);
+
+  const CATEGORY_ROWS = useMemo(
+    () =>
+      [
+        {
+          id: "industrial",
+          name: cards.cat_industrial_name,
+          desc: cards.cat_industrial_desc,
+          icon: cards.cat_industrial_emoji,
+          color: "#185FA5",
+          lightColor: "#E6F1FB",
+          href: "/products?category=industrial",
+        },
+        {
+          id: "marine",
+          name: cards.cat_marine_name,
+          desc: cards.cat_marine_desc,
+          icon: cards.cat_marine_emoji,
+          color: "#0F6E56",
+          lightColor: "#E1F5EE",
+          href: "/products?category=marine",
+        },
+        {
+          id: "automotive",
+          name: cards.cat_automotive_name,
+          desc: cards.cat_automotive_desc,
+          icon: cards.cat_automotive_emoji,
+          color: "#993C1D",
+          lightColor: "#FAECE7",
+          href: "/products?category=automotive",
+        },
+        {
+          id: "architectural",
+          name: cards.cat_architectural_name,
+          desc: cards.cat_architectural_desc,
+          icon: cards.cat_architectural_emoji,
+          color: "#BA7517",
+          lightColor: "#FAEEDA",
+          href: "/products?category=architectural",
+        },
+        {
+          id: "custom",
+          name: cards.cat_custom_name,
+          desc: cards.cat_custom_desc,
+          icon: cards.cat_custom_emoji,
+          color: "#534AB7",
+          lightColor: "#EEEDFE",
+          href: "/products?category=custom",
+        },
+      ] as const,
+    [cards],
+  );
 
   return (
     <section className="bg-[#F5F0E8] py-16 sm:py-20">
@@ -157,12 +190,12 @@ export function CategoriesSection({ label, heading, subtext }: CategoriesSection
         </ScrollReveal>
 
         <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:flex lg:flex-nowrap lg:justify-center lg:gap-6">
-          {CATEGORIES.map((cat, i) => (
+          {CATEGORY_ROWS.map((cat, i) => (
             <div
               key={cat.id}
               className={[
                 "lg:w-[calc(20%-24px)] lg:min-w-[180px]",
-                i === CATEGORIES.length - 1 && CATEGORIES.length % 2 === 1
+                i === CATEGORY_ROWS.length - 1 && CATEGORY_ROWS.length % 2 === 1
                   ? "col-span-2 flex justify-center md:col-span-1 md:block"
                   : "",
               ]
@@ -171,7 +204,7 @@ export function CategoriesSection({ label, heading, subtext }: CategoriesSection
             >
               <div
                 className={
-                  i === CATEGORIES.length - 1 && CATEGORIES.length % 2 === 1
+                  i === CATEGORY_ROWS.length - 1 && CATEGORY_ROWS.length % 2 === 1
                     ? "w-full max-w-[min(280px,calc(100vw-5rem))] md:max-w-none"
                     : "w-full"
                 }

@@ -5,7 +5,10 @@ import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Toast } from "@/components/ui/Toast";
 import { useAlertDialog } from "@/components/ui/useAlertDialog";
+import { mergeAboutContent, type AboutContent } from "@/lib/content/about";
 import { mergeCertificationsPageContent, type CertificationsPageContent } from "@/lib/content/certifications-page";
+import { mergeContactPageContent, type ContactPageContent } from "@/lib/content/contact-page";
+import { mergeFooterContent, type FooterContent } from "@/lib/content/footer";
 import { mergeHomepageContent, type HomepageContent } from "@/lib/content/homepage";
 import { mergeProjectsPageContent, type ProjectsPageContent } from "@/lib/content/projects-page";
 import type { ContentPageStatus } from "@/types/content-page";
@@ -16,10 +19,6 @@ export interface ContentEditorProps {
   pageKey: string;
   initialContent: Record<string, unknown>;
   initialStatus: ContentPageStatus;
-}
-
-function str(v: unknown): string {
-  return typeof v === "string" ? v : v == null ? "" : String(v);
 }
 
 const STATUS_OPTS: { value: ContentPageStatus; label: string }[] = [
@@ -69,6 +68,27 @@ const HP_SECTIONS: HpSectionDef[] = [
       { key: "categories_label", label: "Section label" },
       { key: "categories_heading", label: "Heading" },
       { key: "categories_subtext", label: "Subtext", multiline: true },
+    ],
+  },
+  {
+    id: "category_cards",
+    title: "Category cards",
+    fields: [
+      { key: "cat_industrial_name", label: "Industrial — name" },
+      { key: "cat_industrial_desc", label: "Industrial — description", multiline: true },
+      { key: "cat_industrial_emoji", label: "Industrial — emoji" },
+      { key: "cat_marine_name", label: "Marine — name" },
+      { key: "cat_marine_desc", label: "Marine — description", multiline: true },
+      { key: "cat_marine_emoji", label: "Marine — emoji" },
+      { key: "cat_automotive_name", label: "Automotive — name" },
+      { key: "cat_automotive_desc", label: "Automotive — description", multiline: true },
+      { key: "cat_automotive_emoji", label: "Automotive — emoji" },
+      { key: "cat_architectural_name", label: "Architectural — name" },
+      { key: "cat_architectural_desc", label: "Architectural — description", multiline: true },
+      { key: "cat_architectural_emoji", label: "Architectural — emoji" },
+      { key: "cat_custom_name", label: "Custom — name" },
+      { key: "cat_custom_desc", label: "Custom — description", multiline: true },
+      { key: "cat_custom_emoji", label: "Custom — emoji" },
     ],
   },
   {
@@ -156,6 +176,334 @@ const HP_SECTIONS: HpSectionDef[] = [
 const area =
   "w-full rounded-lg border border-[#D0D0CA] px-3.5 py-2.5 font-sans text-sm text-[#333] placeholder:text-[#999] focus:border-[var(--color-gold)] focus:outline-none focus:ring-2 focus:ring-[var(--color-gold)]";
 
+type AboutFieldDef = { key: keyof AboutContent; label: string; multiline?: boolean };
+
+type AboutSectionDef = { id: string; title: string; defaultOpen?: boolean; fields: AboutFieldDef[] };
+
+const ABOUT_EDITOR_SECTIONS: AboutSectionDef[] = [
+  {
+    id: "ab_hero",
+    title: "Hero",
+    defaultOpen: true,
+    fields: [
+      { key: "about_hero_badge", label: "Badge" },
+      { key: "about_hero_heading", label: "Heading" },
+      { key: "about_hero_subtext", label: "Subtext", multiline: true },
+    ],
+  },
+  {
+    id: "ab_story",
+    title: "Our story",
+    fields: [
+      { key: "story_p1", label: "Paragraph 1", multiline: true },
+      { key: "story_p2", label: "Paragraph 2", multiline: true },
+      { key: "story_p3", label: "Paragraph 3", multiline: true },
+    ],
+  },
+  {
+    id: "ab_stats",
+    title: "Stats",
+    fields: [
+      { key: "about_stat_1_number", label: "Stat 1 number" },
+      { key: "about_stat_1_label", label: "Stat 1 label" },
+      { key: "about_stat_2_number", label: "Stat 2 number" },
+      { key: "about_stat_2_label", label: "Stat 2 label" },
+      { key: "about_stat_3_number", label: "Stat 3 number" },
+      { key: "about_stat_3_label", label: "Stat 3 label" },
+      { key: "about_stat_4_number", label: "Stat 4 number" },
+      { key: "about_stat_4_label", label: "Stat 4 label" },
+    ],
+  },
+  {
+    id: "ab_features",
+    title: "Features",
+    fields: [
+      { key: "about_feature_1", label: "Feature 1", multiline: true },
+      { key: "about_feature_2", label: "Feature 2", multiline: true },
+      { key: "about_feature_3", label: "Feature 3", multiline: true },
+      { key: "about_feature_4", label: "Feature 4", multiline: true },
+    ],
+  },
+  {
+    id: "ab_process",
+    title: "Manufacturing process",
+    fields: [
+      { key: "about_process_heading", label: "Section heading" },
+      { key: "about_process_1_title", label: "Step 1 title" },
+      { key: "about_process_1_desc", label: "Step 1 description", multiline: true },
+      { key: "about_process_2_title", label: "Step 2 title" },
+      { key: "about_process_2_desc", label: "Step 2 description", multiline: true },
+      { key: "about_process_3_title", label: "Step 3 title" },
+      { key: "about_process_3_desc", label: "Step 3 description", multiline: true },
+      { key: "about_process_4_title", label: "Step 4 title" },
+      { key: "about_process_4_desc", label: "Step 4 description", multiline: true },
+    ],
+  },
+  {
+    id: "ab_cta",
+    title: "Closing CTA",
+    fields: [
+      { key: "about_cta_heading", label: "Heading" },
+      { key: "about_cta_subtext", label: "Subtext", multiline: true },
+      { key: "about_cta_primary", label: "Primary button" },
+      { key: "about_cta_secondary", label: "Secondary button" },
+    ],
+  },
+];
+
+function AboutPageEditor({
+  aboutPage,
+  setAboutPage,
+}: {
+  aboutPage: AboutContent;
+  setAboutPage: Dispatch<SetStateAction<AboutContent>>;
+}) {
+  const [open, setOpen] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(ABOUT_EDITOR_SECTIONS.map((s) => [s.id, Boolean(s.defaultOpen)])),
+  );
+
+  return (
+    <div className="space-y-2">
+      {ABOUT_EDITOR_SECTIONS.map((section) => (
+        <div key={section.id} className="rounded-lg border border-[#E8E8E4]">
+          <button
+            type="button"
+            onClick={() => setOpen((o) => ({ ...o, [section.id]: !o[section.id] }))}
+            className="flex w-full items-center justify-between px-4 py-3 text-left font-sans text-[11px] font-medium uppercase tracking-widest text-[#888]"
+          >
+            {section.title}
+            <span aria-hidden>{open[section.id] ? "−" : "+"}</span>
+          </button>
+          {open[section.id] ? (
+            <div className="space-y-4 border-t border-[#E8E8E4] px-4 py-4">
+              {section.fields.map((f) =>
+                f.multiline ? (
+                  <div key={String(f.key)}>
+                    <label className="mb-1.5 block font-sans text-[13px] font-medium text-[#333]">
+                      {f.label}
+                    </label>
+                    <textarea
+                      rows={f.key.includes("story") || f.key.includes("desc") ? 4 : 3}
+                      className={area}
+                      value={aboutPage[f.key]}
+                      onChange={(e) =>
+                        setAboutPage((p) => ({ ...p, [f.key]: e.target.value }))
+                      }
+                    />
+                  </div>
+                ) : (
+                  <Input
+                    key={String(f.key)}
+                    label={f.label}
+                    value={aboutPage[f.key]}
+                    onChange={(e) => setAboutPage((p) => ({ ...p, [f.key]: e.target.value }))}
+                  />
+                ),
+              )}
+            </div>
+          ) : null}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+type FooterFieldDef = { key: keyof FooterContent; label: string; multiline?: boolean };
+
+type FooterSectionDef = { id: string; title: string; defaultOpen?: boolean; fields: FooterFieldDef[] };
+
+const FOOTER_EDITOR_SECTIONS: FooterSectionDef[] = [
+  {
+    id: "ft_brand",
+    title: "Brand",
+    defaultOpen: true,
+    fields: [
+      { key: "tagline", label: "Tagline", multiline: true },
+      { key: "address_line", label: "Address line" },
+      { key: "bottom_tagline", label: "Bottom tagline" },
+    ],
+  },
+  {
+    id: "ft_regions",
+    title: "Regions",
+    fields: [{ key: "regions_line", label: "Regions line" }],
+  },
+  {
+    id: "ft_columns",
+    title: "Column headings",
+    fields: [
+      { key: "products_column_heading", label: "Products column" },
+      { key: "company_column_heading", label: "Company column" },
+    ],
+  },
+  {
+    id: "ft_copyright",
+    title: "Copyright",
+    fields: [{ key: "copyright_suffix", label: "Copyright suffix" }],
+  },
+];
+
+function FooterPageEditor({
+  footerPage,
+  setFooterPage,
+}: {
+  footerPage: FooterContent;
+  setFooterPage: Dispatch<SetStateAction<FooterContent>>;
+}) {
+  const [open, setOpen] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(FOOTER_EDITOR_SECTIONS.map((s) => [s.id, Boolean(s.defaultOpen)])),
+  );
+
+  return (
+    <div className="space-y-2">
+      {FOOTER_EDITOR_SECTIONS.map((section) => (
+        <div key={section.id} className="rounded-lg border border-[#E8E8E4]">
+          <button
+            type="button"
+            onClick={() => setOpen((o) => ({ ...o, [section.id]: !o[section.id] }))}
+            className="flex w-full items-center justify-between px-4 py-3 text-left font-sans text-[11px] font-medium uppercase tracking-widest text-[#888]"
+          >
+            {section.title}
+            <span aria-hidden>{open[section.id] ? "−" : "+"}</span>
+          </button>
+          {open[section.id] ? (
+            <div className="space-y-4 border-t border-[#E8E8E4] px-4 py-4">
+              {section.fields.map((f) =>
+                f.multiline ? (
+                  <div key={String(f.key)}>
+                    <label className="mb-1.5 block font-sans text-[13px] font-medium text-[#333]">
+                      {f.label}
+                    </label>
+                    <textarea
+                      rows={3}
+                      className={area}
+                      value={footerPage[f.key]}
+                      onChange={(e) =>
+                        setFooterPage((p) => ({ ...p, [f.key]: e.target.value }))
+                      }
+                    />
+                  </div>
+                ) : (
+                  <Input
+                    key={String(f.key)}
+                    label={f.label}
+                    value={footerPage[f.key]}
+                    onChange={(e) =>
+                      setFooterPage((p) => ({ ...p, [f.key]: e.target.value }))
+                    }
+                  />
+                ),
+              )}
+            </div>
+          ) : null}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+type ContactFieldDef = { key: keyof ContactPageContent; label: string; multiline?: boolean; email?: boolean };
+
+type ContactSectionDef = { id: string; title: string; defaultOpen?: boolean; fields: ContactFieldDef[] };
+
+const CONTACT_EDITOR_SECTIONS: ContactSectionDef[] = [
+  {
+    id: "ct_header",
+    title: "Page header",
+    defaultOpen: true,
+    fields: [
+      { key: "contact_page_badge", label: "Badge" },
+      { key: "contact_page_heading", label: "Heading" },
+      { key: "contact_page_subtext", label: "Subtext", multiline: true },
+    ],
+  },
+  {
+    id: "ct_details",
+    title: "Contact details",
+    fields: [
+      { key: "address", label: "Address" },
+      { key: "email", label: "Email", email: true },
+      { key: "whatsapp", label: "WhatsApp number" },
+    ],
+  },
+  {
+    id: "ct_serving",
+    title: "Serving",
+    fields: [
+      { key: "contact_serving_heading", label: "Heading" },
+      { key: "contact_regions", label: "Regions line", multiline: true },
+    ],
+  },
+  {
+    id: "ct_intl",
+    title: "International enquiries",
+    fields: [
+      { key: "contact_intl_heading", label: "Heading" },
+      { key: "contact_intl_body", label: "Body", multiline: true },
+    ],
+  },
+];
+
+function ContactPageEditor({
+  contactPage,
+  setContactPage,
+}: {
+  contactPage: ContactPageContent;
+  setContactPage: Dispatch<SetStateAction<ContactPageContent>>;
+}) {
+  const [open, setOpen] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(CONTACT_EDITOR_SECTIONS.map((s) => [s.id, Boolean(s.defaultOpen)])),
+  );
+
+  return (
+    <div className="space-y-2">
+      {CONTACT_EDITOR_SECTIONS.map((section) => (
+        <div key={section.id} className="rounded-lg border border-[#E8E8E4]">
+          <button
+            type="button"
+            onClick={() => setOpen((o) => ({ ...o, [section.id]: !o[section.id] }))}
+            className="flex w-full items-center justify-between px-4 py-3 text-left font-sans text-[11px] font-medium uppercase tracking-widest text-[#888]"
+          >
+            {section.title}
+            <span aria-hidden>{open[section.id] ? "−" : "+"}</span>
+          </button>
+          {open[section.id] ? (
+            <div className="space-y-4 border-t border-[#E8E8E4] px-4 py-4">
+              {section.fields.map((f) =>
+                f.multiline ? (
+                  <div key={String(f.key)}>
+                    <label className="mb-1.5 block font-sans text-[13px] font-medium text-[#333]">
+                      {f.label}
+                    </label>
+                    <textarea
+                      rows={f.key === "contact_page_subtext" || f.key === "contact_intl_body" ? 4 : 3}
+                      className={area}
+                      value={contactPage[f.key]}
+                      onChange={(e) =>
+                        setContactPage((p) => ({ ...p, [f.key]: e.target.value }))
+                      }
+                    />
+                  </div>
+                ) : (
+                  <Input
+                    key={String(f.key)}
+                    label={f.label}
+                    type={f.email ? "email" : undefined}
+                    value={contactPage[f.key]}
+                    onChange={(e) =>
+                      setContactPage((p) => ({ ...p, [f.key]: e.target.value }))
+                    }
+                  />
+                ),
+              )}
+            </div>
+          ) : null}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function HomepageEditor({
   hp,
   setHp,
@@ -188,7 +536,13 @@ function HomepageEditor({
                       {f.label}
                     </label>
                     <textarea
-                      rows={f.key.includes("quote") || f.key.includes("body") ? 4 : 3}
+                      rows={
+                        f.key.includes("quote") ||
+                        f.key.includes("body") ||
+                        String(f.key).includes("desc")
+                          ? 4
+                          : 3
+                      }
                       className={area}
                       value={hp[f.key]}
                       onChange={(e) => setHp((p) => ({ ...p, [f.key]: e.target.value }))}
@@ -222,13 +576,11 @@ export function ContentEditor({ pageKey, initialContent, initialStatus }: Conten
 
   const [hp, setHp] = useState<HomepageContent>(() => mergeHomepageContent(initialContent));
 
-  const [story1, setStory1] = useState(str(initialContent.story_p1));
-  const [story2, setStory2] = useState(str(initialContent.story_p2));
-  const [story3, setStory3] = useState(str(initialContent.story_p3));
+  const [aboutPage, setAboutPage] = useState(() => mergeAboutContent(initialContent));
 
-  const [address, setAddress] = useState(str(initialContent.address));
-  const [email, setEmail] = useState(str(initialContent.email));
-  const [whatsapp, setWhatsapp] = useState(str(initialContent.whatsapp));
+  const [footerPage, setFooterPage] = useState(() => mergeFooterContent(initialContent));
+
+  const [contactPage, setContactPage] = useState(() => mergeContactPageContent(initialContent));
 
   const [projPage, setProjPage] = useState(() => mergeProjectsPageContent(initialContent));
   const [certPage, setCertPage] = useState(() => mergeCertificationsPageContent(initialContent));
@@ -247,6 +599,7 @@ export function ContentEditor({ pageKey, initialContent, initialStatus }: Conten
     if (pageKey === "homepage") return "homepage" as const;
     if (pageKey === "about") return "about" as const;
     if (pageKey === "contact") return "contact" as const;
+    if (pageKey === "footer") return "footer" as const;
     if (pageKey === "projects") return "projects" as const;
     if (pageKey === "certifications") return "certifications" as const;
     return "generic" as const;
@@ -261,20 +614,25 @@ export function ContentEditor({ pageKey, initialContent, initialStatus }: Conten
       return { ...initialContent, ...trimmed };
     }
     if (mode === "about") {
-      return {
-        ...initialContent,
-        story_p1: story1.trim(),
-        story_p2: story2.trim(),
-        story_p3: story3.trim(),
-      };
+      const trimmed = { ...aboutPage };
+      for (const k of Object.keys(trimmed) as (keyof AboutContent)[]) {
+        trimmed[k] = trimmed[k].trim();
+      }
+      return { ...initialContent, ...trimmed };
+    }
+    if (mode === "footer") {
+      const trimmed = { ...footerPage };
+      for (const k of Object.keys(trimmed) as (keyof FooterContent)[]) {
+        trimmed[k] = trimmed[k].trim();
+      }
+      return { ...initialContent, ...trimmed };
     }
     if (mode === "contact") {
-      return {
-        ...initialContent,
-        address: address.trim(),
-        email: email.trim(),
-        whatsapp: whatsapp.trim(),
-      };
+      const trimmed = { ...contactPage };
+      for (const k of Object.keys(trimmed) as (keyof ContactPageContent)[]) {
+        trimmed[k] = trimmed[k].trim();
+      }
+      return { ...initialContent, ...trimmed };
     }
     if (mode === "projects") {
       const trimmed = { ...projPage };
@@ -311,20 +669,28 @@ export function ContentEditor({ pageKey, initialContent, initialStatus }: Conten
       return { ...initialContent, ...t };
     }
     if (pageKey === "about") {
-      return {
-        ...initialContent,
-        story_p1: str(initialContent.story_p1).trim(),
-        story_p2: str(initialContent.story_p2).trim(),
-        story_p3: str(initialContent.story_p3).trim(),
-      };
+      const m = mergeAboutContent(initialContent);
+      const t = { ...m };
+      for (const k of Object.keys(t) as (keyof AboutContent)[]) {
+        t[k] = t[k].trim();
+      }
+      return { ...initialContent, ...t };
+    }
+    if (pageKey === "footer") {
+      const m = mergeFooterContent(initialContent);
+      const t = { ...m };
+      for (const k of Object.keys(t) as (keyof FooterContent)[]) {
+        t[k] = t[k].trim();
+      }
+      return { ...initialContent, ...t };
     }
     if (pageKey === "contact") {
-      return {
-        ...initialContent,
-        address: str(initialContent.address).trim(),
-        email: str(initialContent.email).trim(),
-        whatsapp: str(initialContent.whatsapp).trim(),
-      };
+      const m = mergeContactPageContent(initialContent);
+      const t = { ...m };
+      for (const k of Object.keys(t) as (keyof ContactPageContent)[]) {
+        t[k] = t[k].trim();
+      }
+      return { ...initialContent, ...t };
     }
     if (pageKey === "projects") {
       const m = mergeProjectsPageContent(initialContent);
@@ -364,12 +730,9 @@ export function ContentEditor({ pageKey, initialContent, initialStatus }: Conten
     initialJsonRaw,
     initialSnapshot,
     hp,
-    story1,
-    story2,
-    story3,
-    address,
-    email,
-    whatsapp,
+    aboutPage,
+    footerPage,
+    contactPage,
     projPage,
     certPage,
     initialContent,
@@ -464,34 +827,15 @@ export function ContentEditor({ pageKey, initialContent, initialStatus }: Conten
         {mode === "homepage" ? <HomepageEditor hp={hp} setHp={setHp} /> : null}
 
         {mode === "about" ? (
-          <div className="space-y-4">
-            <p className="mb-2 font-sans text-[11px] font-medium uppercase tracking-widest text-[#888]">
-              Company story
-            </p>
-            <div>
-              <label className="mb-1.5 block font-sans text-[13px] font-medium text-[#333]">Paragraph 1</label>
-              <textarea value={story1} onChange={(e) => setStory1(e.target.value)} rows={4} className={area} />
-            </div>
-            <div>
-              <label className="mb-1.5 block font-sans text-[13px] font-medium text-[#333]">Paragraph 2</label>
-              <textarea value={story2} onChange={(e) => setStory2(e.target.value)} rows={4} className={area} />
-            </div>
-            <div>
-              <label className="mb-1.5 block font-sans text-[13px] font-medium text-[#333]">Paragraph 3</label>
-              <textarea value={story3} onChange={(e) => setStory3(e.target.value)} rows={4} className={area} />
-            </div>
-          </div>
+          <AboutPageEditor aboutPage={aboutPage} setAboutPage={setAboutPage} />
+        ) : null}
+
+        {mode === "footer" ? (
+          <FooterPageEditor footerPage={footerPage} setFooterPage={setFooterPage} />
         ) : null}
 
         {mode === "contact" ? (
-          <div className="space-y-4">
-            <p className="mb-2 font-sans text-[11px] font-medium uppercase tracking-widest text-[#888]">
-              Contact details
-            </p>
-            <Input label="Address" value={address} onChange={(e) => setAddress(e.target.value)} />
-            <Input label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-            <Input label="WhatsApp number" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} />
-          </div>
+          <ContactPageEditor contactPage={contactPage} setContactPage={setContactPage} />
         ) : null}
 
         {mode === "projects" ? (

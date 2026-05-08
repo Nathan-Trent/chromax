@@ -1,6 +1,7 @@
 import { AboutStatsStrip } from "@/components/public/about/AboutStatsStrip";
+import { PageHeader } from "@/components/public/PageHeader";
+import { getAboutContent } from "@/lib/content/about";
 import { ScrollReveal } from "@/lib/animations/useScrollReveal";
-import { getLiveContentPage, strFromContent } from "@/lib/supabase/queries/content-public";
 import Link from "next/link";
 import { Fragment } from "react";
 
@@ -10,85 +11,55 @@ const primaryCtaClass =
 const outlineCtaClass =
   "inline-flex items-center justify-center gap-2 rounded-lg border-2 border-white/40 px-6 py-3 font-sans text-[13px] font-medium text-white transition-colors duration-150 hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white";
 
-const featureItems = [
-  "State-of-the-art manufacturing plant in Ikotun",
-  "Full ISO certification and export licensing",
-  "In-house quality control and batch testing",
-  "Technical support team for specification guidance",
-];
-
-const processSteps = [
-  {
-    n: 1,
-    title: "Raw materials",
-    desc: "Sourced and tested on arrival against specification",
-  },
-  {
-    n: 2,
-    title: "Formulation",
-    desc: "Mixed to precise ratios in our temperature-controlled facility",
-  },
-  {
-    n: 3,
-    title: "Quality control",
-    desc: "Every batch tested for consistency, coverage and adhesion",
-  },
-  {
-    n: 4,
-    title: "Dispatch",
-    desc: "Packaged and shipped with full documentation and batch records",
-  },
-];
-
-const DEFAULT_STORY_P1 =
-  "Founded in 1999 in Ikotun, Lagos, Chromax-MCR began as a small industrial coatings workshop serving local manufacturers. Over two decades, we have grown into one of Nigeria's leading paint manufacturers — supplying contractors, builders and industrial operators across the country.";
-
-const DEFAULT_STORY_P2 =
-  "Our expansion into international markets began with exports to Ukraine, followed by the United Kingdom and United States. Today, our products protect infrastructure, vessels and vehicles in four countries — formulated and manufactured entirely in Lagos.";
-
-const DEFAULT_STORY_P3 =
-  "We operate an ISO-certified manufacturing facility with full quality control at every stage — from raw material selection to final dispatch. Every batch is tested before it leaves our facility.";
-
 export default async function AboutPage() {
-  const row = await getLiveContentPage("about");
-  const content = row?.content as Record<string, unknown> | undefined;
+  const content = await getAboutContent();
 
-  const story1 = strFromContent(content, "story_p1", DEFAULT_STORY_P1);
-  const story2 = strFromContent(content, "story_p2", DEFAULT_STORY_P2);
-  const story3 = strFromContent(content, "story_p3", DEFAULT_STORY_P3);
+  const stats = [
+    { number: content.about_stat_1_number, label: content.about_stat_1_label },
+    { number: content.about_stat_2_number, label: content.about_stat_2_label },
+    { number: content.about_stat_3_number, label: content.about_stat_3_label },
+    { number: content.about_stat_4_number, label: content.about_stat_4_label },
+  ];
+
+  const featureItems = [
+    content.about_feature_1,
+    content.about_feature_2,
+    content.about_feature_3,
+    content.about_feature_4,
+  ].filter(Boolean);
+
+  const processSteps = [
+    {
+      n: 1,
+      title: content.about_process_1_title,
+      desc: content.about_process_1_desc,
+    },
+    {
+      n: 2,
+      title: content.about_process_2_title,
+      desc: content.about_process_2_desc,
+    },
+    {
+      n: 3,
+      title: content.about_process_3_title,
+      desc: content.about_process_3_desc,
+    },
+    {
+      n: 4,
+      title: content.about_process_4_title,
+      desc: content.about_process_4_desc,
+    },
+  ];
 
   return (
     <>
-      <section className="relative flex min-h-[50vh] items-center overflow-hidden bg-[#1a1a2e] py-20">
-        <div className="pointer-events-none absolute inset-0">
-          <div
-            className="absolute top-[12%] right-[8%] h-40 w-40 rounded-full bg-[#185FA5]/35 blur-3xl motion-reduce:blur-none"
-            aria-hidden
-          />
-          <div
-            className="absolute bottom-[18%] left-[5%] h-48 w-48 rounded-full bg-[#E8A020]/25 blur-3xl motion-reduce:blur-none"
-            aria-hidden
-          />
-          <div
-            className="absolute top-[40%] left-[35%] h-32 w-32 rounded-full bg-[#0F6E56]/30 blur-2xl motion-reduce:blur-none"
-            aria-hidden
-          />
-        </div>
-        <div className="relative z-[1] mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
-          <p className="font-sans text-sm font-medium uppercase tracking-wider text-[#E8A020] sm:text-[11px] sm:tracking-widest">
-            About us
-          </p>
-          <h1 className="font-[family-name:var(--font-fraunces)] mt-4 max-w-3xl text-4xl font-semibold tracking-tight text-white sm:text-5xl md:text-6xl">
-            Made in Lagos. Trusted worldwide.
-          </h1>
-          <p className="mt-4 max-w-2xl font-sans text-lg text-white/60">
-            Chromax-MCR has been manufacturing premium industrial coatings since 1999. From Ikotun,
-            Lagos we supply Nigeria and export to the UK, USA and Ukraine.
-          </p>
-        </div>
-      </section>
+      <PageHeader
+        badge={content.about_hero_badge}
+        heading={content.about_hero_heading}
+        subtext={content.about_hero_subtext}
+      />
 
-      <AboutStatsStrip />
+      <AboutStatsStrip stats={stats} />
 
       <section className="bg-[#F5F0E8] py-20">
         <div className="mx-auto grid max-w-[1280px] grid-cols-1 gap-12 px-4 sm:px-6 lg:grid-cols-2 lg:gap-16 lg:px-8">
@@ -97,10 +68,10 @@ export default async function AboutPage() {
               Our story
             </h2>
             <p className="mb-6 border-l-4 border-[#E8A020] pl-4 font-sans text-[15px] leading-relaxed text-[#555555]">
-              {story1}
+              {content.story_p1}
             </p>
-            <p className="mb-6 font-sans text-[15px] leading-relaxed text-[#555555]">{story2}</p>
-            <p className="font-sans text-[15px] leading-relaxed text-[#555555]">{story3}</p>
+            <p className="mb-6 font-sans text-[15px] leading-relaxed text-[#555555]">{content.story_p2}</p>
+            <p className="font-sans text-[15px] leading-relaxed text-[#555555]">{content.story_p3}</p>
           </div>
           <ul className="flex flex-col justify-center">
             {featureItems.map((text, i) => (
@@ -121,7 +92,7 @@ export default async function AboutPage() {
       <section className="bg-white py-20">
         <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
           <h2 className="font-[family-name:var(--font-fraunces)] mb-14 text-center text-3xl font-semibold text-[#1a1a2e] md:text-4xl">
-            How we manufacture
+            {content.about_process_heading}
           </h2>
 
           <div className="hidden md:flex md:items-start md:justify-between md:gap-0">
@@ -166,17 +137,17 @@ export default async function AboutPage() {
       <section className="bg-[#1a1a2e] py-20">
         <div className="mx-auto max-w-[1280px] px-4 text-center sm:px-6 lg:px-8">
           <h2 className="font-[family-name:var(--font-fraunces)] text-4xl font-semibold text-white">
-            Ready to work with us?
+            {content.about_cta_heading}
           </h2>
           <p className="mx-auto mt-4 max-w-xl font-sans text-[15px] text-white/60">
-            Discover coatings formulated in Lagos for industrial, marine, automotive and architectural use.
+            {content.about_cta_subtext}
           </p>
           <div className="mt-8 flex flex-row flex-wrap items-center justify-center gap-4">
             <Link href="/products" className={primaryCtaClass}>
-              View products
+              {content.about_cta_primary}
             </Link>
             <Link href="/contact" className={outlineCtaClass}>
-              Get in touch
+              {content.about_cta_secondary}
             </Link>
           </div>
         </div>
