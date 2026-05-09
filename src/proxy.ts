@@ -1,5 +1,5 @@
 import { updateSession } from "@/lib/supabase/middleware";
-import { type NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 function isAdminPath(pathname: string): boolean {
   return pathname.startsWith("/admin");
@@ -14,18 +14,29 @@ function isCustomerOrdersPath(pathname: string): boolean {
 }
 
 export async function proxy(request: NextRequest) {
-  const { response, user } = await updateSession(request);
   const pathname = request.nextUrl.pathname;
+  const search = request.nextUrl.search;
+
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-url-pathname", pathname);
+  requestHeaders.set("x-url-search", search);
+
+  const forwardedRequest = new NextRequest(request.url, {
+    headers: requestHeaders,
+  });
+
+  const { response, user } = await updateSession(forwardedRequest);
+  const pathAndQuery = pathname + search;
 
   if (isCustomerOrdersPath(pathname) && !user) {
     const loginUrl = new URL("/account/login", request.url);
-    loginUrl.searchParams.set("next", pathname);
+    loginUrl.searchParams.set("next", pathAndQuery);
     return NextResponse.redirect(loginUrl);
   }
 
   if (isAdminPath(pathname) && !isPublicAdminPath(pathname) && !user) {
     const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("next", pathname);
+    loginUrl.searchParams.set("next", pathAndQuery);
     return NextResponse.redirect(loginUrl);
   }
 
