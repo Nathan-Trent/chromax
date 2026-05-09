@@ -1,20 +1,3 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "ratelimit": [
-    {
-      "path": "/api/auth/*",
-      "limit": 10,
-      "window": "10s"
-    },
-    {
-      "path": "/api/b2b/offers",
-      "limit": 5,
-      "window": "60s"
-    },
-    {
-      "path": "/api/checkout/*",
-      "limit": 10,
-      "window": "30s"
-    }
-  ]
+  "$schema": "https://openapi.vercel.sh/vercel.json"
 }
