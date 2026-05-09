@@ -3,8 +3,36 @@ import { createNotification, notifySuperAdmins } from "@/lib/notifications/notif
 import { NOTIFICATION_TYPES } from "@/lib/notifications/rules";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { workflowLabelForActionType } from "@/lib/workflows/workflow-action-types";
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+/**
+ * Same resolution as {@link notifySuperAdmins} in `@/lib/notifications/notify`.
+ */
+async function getSuperAdminUserIds(service: SupabaseClient): Promise<string[] | null> {
+  try {
+    const { data: superRole, error: rErr } = await service
+      .from("roles")
+      .select("id")
+      .eq("name", "Super Admin")
+      .eq("is_system", true)
+      .maybeSingle();
+    if (rErr || !superRole?.id) {
+      if (rErr) console.warn("[approvals] super admin role lookup:", rErr.message);
+      return null;
+    }
+    const { data: rows, error } = await service.from("user_roles").select("user_id").eq("role_id", superRole.id);
+    if (error) {
+      console.warn("[approvals] super admin user_roles failed:", error.message);
+      return null;
+    }
+    return [...new Set((rows ?? []).map((r: { user_id: string }) => r.user_id))];
+  } catch {
+    return null;
+  }
+}
 
 async function notifySuperAdminsInAppExcludingUserIds(
+  service: SupabaseClient,
   excludeUserIds: Set<string>,
   options: {
     type: string;
@@ -14,25 +42,9 @@ async function notifySuperAdminsInAppExcludingUserIds(
   },
 ): Promise<void> {
   try {
-    const service = createServiceRoleClient();
-    const { data: superRole, error: rErr } = await service
-      .from("roles")
-      .select("id")
-      .eq("name", "Super Admin")
-      .eq("is_system", true)
-      .maybeSingle();
-    if (rErr || !superRole?.id) {
-      if (rErr) console.warn("[approvals] super admin role lookup:", rErr.message);
-      return;
-    }
-    const { data: rows, error } = await service.from("user_roles").select("user_id").eq("role_id", superRole.id);
-    if (error) {
-      console.warn("[approvals] super admin user_roles failed:", error.message);
-      return;
-    }
-    const ids = [...new Set((rows ?? []).map((r: { user_id: string }) => r.user_id))].filter(
-      (uid) => !excludeUserIds.has(uid),
-    );
+    const idsFull = await getSuperAdminUserIds(service);
+    if (!idsFull) return;
+    const ids = idsFull.filter((uid) => !excludeUserIds.has(uid));
     await Promise.all(
       ids.map((userId) =>
         createNotification({
@@ -133,8 +145,24 @@ export function voidNotifyApprovalEmailsForWorkflow(
         );
       }
 
+      const superAdminIds = await getSuperAdminUserIds(service);
+      if (superAdminIds) {
+        for (const uid of superAdminIds) {
+          if (approverUserIdsEmailed.has(uid)) continue;
+          const { data: auth, error: saErr } = await service.auth.admin.getUserById(uid);
+          if (saErr || !auth.user?.email) continue;
+          void sendApprovalRequested(
+            params.recordLabel,
+            params.actionType,
+            params.submittedByEmail,
+            auth.user.email,
+            params.dashboardUrl,
+          );
+        }
+      }
+
       const actionLabel = workflowLabelForActionType(params.actionType);
-      await notifySuperAdminsInAppExcludingUserIds(approverUserIdsEmailed, {
+      await notifySuperAdminsInAppExcludingUserIds(service, approverUserIdsEmailed, {
         type: NOTIFICATION_TYPES.APPROVAL_PENDING,
         title: "Approval requested",
         message: `Approval requested — ${actionLabel} on ${params.recordLabel} (submitted by ${params.submittedByEmail})`,

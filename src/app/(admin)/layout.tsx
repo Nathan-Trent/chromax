@@ -4,19 +4,28 @@ import { GlobalAlertDialog } from "@/components/ui/GlobalAlertDialog";
 import { parseUserRoleRows } from "@/lib/auth/parse-user-roles";
 import { isSuperAdmin } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
+
+function redirectToLoginPreservingReturn(h: { get(name: string): string | null | undefined }): never {
+  const pathname = h.get("x-url-pathname") ?? "";
+  const search = h.get("x-url-search") ?? "";
+  const pathAndQuery = pathname + search || "/admin/dashboard";
+  redirect(`/login?next=${encodeURIComponent(pathAndQuery)}`);
+}
 
 export default async function AdminGroupLayout({
   children,
 }: Readonly<{
   children: ReactNode;
 }>) {
+  const h = await headers();
   const supabase = await createClient();
 
   const { data: claimsData, error: claimsError } = await supabase.auth.getClaims();
-  if (claimsError || !claimsData?.claims?.sub) {
-    redirect("/login");
+  if (claimsError || !claimsData || !claimsData.claims?.sub) {
+    redirectToLoginPreservingReturn(h);
   }
 
   const userId = String(claimsData.claims.sub);
@@ -31,7 +40,7 @@ export default async function AdminGroupLayout({
   }
 
   if (!email) {
-    redirect("/login");
+    redirectToLoginPreservingReturn(h);
   }
 
   const { data: userRoleRows } = await supabase

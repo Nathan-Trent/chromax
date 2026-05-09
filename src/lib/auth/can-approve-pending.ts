@@ -9,7 +9,7 @@ export function canApprovePendingChange(
     return true;
   }
   if (!approverRoleId) {
-    return true;
+    return isSuperAdmin(ctx.roles);
   }
   return ctx.roles.some((r) => r.id === approverRoleId);
 }

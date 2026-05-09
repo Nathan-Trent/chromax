@@ -42,8 +42,11 @@ export default async function AdminWorkflowsPage() {
   if (!superUser && !designatedApprover) {
     return (
       <div className="p-8">
-        <h1 className="mb-2 font-sans text-2xl font-semibold text-[#1a1a2e]">Approval Workflows</h1>
-        <p className="font-sans text-[#888888]">Access denied. Super Admin only.</p>
+        <h1 className="mb-2 font-sans text-2xl font-semibold text-[#1a1a2e]">Access restricted</h1>
+        <p className="max-w-xl font-sans text-[#888888]">
+          This page is available to Super Admins and users assigned as approvers on an active workflow.
+          Contact your administrator if you believe you should have access.
+        </p>
       </div>
     );
   }
