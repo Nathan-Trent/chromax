@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { getPaymentConfig } from "@/lib/payments/config";
 
 type CheckoutBody = {
   items?: unknown;
@@ -26,12 +25,6 @@ export async function POST(request: Request) {
       { status: 422 },
     );
   }
-
-  const config = await getPaymentConfig();
-  console.log("[checkout/paystack] config (public keys only logged in dev)", {
-    paystackEnabled: config.paystack.enabled,
-    publicKeyPrefix: config.paystack.publicKey?.slice(0, 8),
-  });
 
   // TODO: call Paystack initialize transaction API.
   // TODO: create order in Supabase with generateOrderReference().

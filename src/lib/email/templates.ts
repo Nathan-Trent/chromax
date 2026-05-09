@@ -21,7 +21,7 @@ function money(amount: number, currency: string): string {
 }
 
 function wrapBody(inner: string): string {
-  const logoSrc = `${(process.env.NEXT_PUBLIC_APP_URL ?? "").replace(/\/$/, "")}/images/chromax-logo.png`;
+  const logoSrc = `${escapeHtml((process.env.NEXT_PUBLIC_APP_URL ?? "").replace(/\/$/, ""))}/images/chromax-logo.png`;
   const year = new Date().getFullYear();
   return `<!DOCTYPE html>
 <html lang="en"><body style="margin:0;padding:0;background:#F5F0E8;font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#555555;line-height:1.7;">

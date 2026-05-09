@@ -48,9 +48,11 @@ export async function GET(request: Request) {
   }
 
   if (search?.trim()) {
-    const safe = search.trim().replace(/[%*,]/g, "");
-    const s = `%${safe}%`;
-    q = q.or(`email.ilike.${s},company.ilike.${s}`);
+    const safe = search.trim().replace(/[^a-zA-Z0-9 @._-]/g, "");
+    if (safe) {
+      const s = `%${safe}%`;
+      q = q.or(`email.ilike.${s},company.ilike.${s}`);
+    }
   }
 
   const { data, error, count } = await q.range(from, to);

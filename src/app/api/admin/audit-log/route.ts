@@ -46,8 +46,11 @@ export async function GET(request: Request) {
     .order("created_at", { ascending: false });
 
   if (search?.trim()) {
-    const s = `%${search.trim().replace(/%/g, "")}%`;
-    q = q.or(`user_email.ilike.${s},action_type.ilike.${s}`);
+    const safe = search.trim().replace(/[^a-zA-Z0-9 @._-]/g, "");
+    if (safe) {
+      const s = `%${safe}%`;
+      q = q.or(`user_email.ilike.${s},action_type.ilike.${s}`);
+    }
   }
   if (user_email?.trim()) {
     q = q.ilike("user_email", `%${user_email.trim().replace(/%/g, "")}%`);
