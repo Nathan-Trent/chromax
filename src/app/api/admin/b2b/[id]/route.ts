@@ -42,7 +42,7 @@ export async function PATCH(
   if (!ctx) {
     return NextResponse.json({ error: "You must be signed in" }, { status: 401 });
   }
-  if (!hasPermission(ctx.roles, "b2b", "view")) {
+  if (!hasPermission(ctx.roles, "b2b", "edit")) {
     return NextResponse.json({ error: "You don't have permission" }, { status: 403 });
   }
 
