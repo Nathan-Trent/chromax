@@ -21,14 +21,13 @@ function money(amount: number, currency: string): string {
 }
 
 function wrapBody(inner: string): string {
-  const logoSrc = `${escapeHtml((process.env.NEXT_PUBLIC_APP_URL ?? "").replace(/\/$/, ""))}/images/chromax-logo.png`;
   const year = new Date().getFullYear();
   return `<!DOCTYPE html>
 <html lang="en"><body style="margin:0;padding:0;background:#F5F0E8;font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#555555;line-height:1.7;">
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#F5F0E8;padding:24px 12px;"><tr><td align="center">
 <table role="presentation" width="600" cellspacing="0" cellpadding="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(26,26,46,0.08);">
 <tr><td style="background:#1a1a2e;padding:20px 24px;text-align:center;">
-<img src="${logoSrc}" alt="Chromax-MCR" width="48" height="48" style="display:block;margin:0 auto 8px auto;" />
+<img src="${escapeHtml((process.env.NEXT_PUBLIC_APP_URL ?? "").replace(/\/$/, ""))}/images/chromax-logo.png" alt="Chromax-MCR" width="48" height="48" style="display:block;margin:0 auto 8px auto;" />
 <span style="font-size:15px;font-weight:600;letter-spacing:0.04em;color:#ffffff;">CHROMAX-MCR</span>
 </td></tr>
 <tr><td style="height:4px;background:#E8A020;line-height:4px;font-size:0;">&nbsp;</td></tr>
