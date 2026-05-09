@@ -106,7 +106,10 @@ export const ROLE_PERMISSION_SECTIONS: {
   {
     key: "erp_sync",
     label: "ERP sync",
-    actions: [{ key: "view", label: "View" }],
+    actions: [
+      { key: "view", label: "View" },
+      { key: "edit", label: "Manage sync" },
+    ],
   },
   {
     key: "ai_leads",

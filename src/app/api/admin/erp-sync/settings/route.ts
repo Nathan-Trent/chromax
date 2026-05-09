@@ -1,5 +1,5 @@
 import { getAdminRequestContext } from "@/lib/auth/admin-api";
-import { hasPermission, isSuperAdmin } from "@/lib/auth/permissions";
+import { hasPermission } from "@/lib/auth/permissions";
 import { erpSyncSettingsPatchSchema } from "@/lib/schemas/admin-erp-sync";
 import { writeAuditLog } from "@/lib/audit/write-audit-log";
 import { NextResponse } from "next/server";
@@ -30,8 +30,8 @@ export async function PATCH(request: Request) {
   if (!ctx) {
     return NextResponse.json({ error: "You must be signed in" }, { status: 401 });
   }
-  if (!isSuperAdmin(ctx.roles)) {
-    return NextResponse.json({ error: "Super admin only" }, { status: 403 });
+  if (!hasPermission(ctx.roles, "erp_sync", "edit")) {
+    return NextResponse.json({ error: "You don't have permission" }, { status: 403 });
   }
 
   let body: unknown;

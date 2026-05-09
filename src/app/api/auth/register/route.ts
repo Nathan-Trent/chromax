@@ -1,10 +1,23 @@
 import { sendEmail } from "@/lib/email/sender";
 import { postAuthRegisterSchema } from "@/lib/schemas/auth-register";
 import { RECAPTCHA_USER_ERROR, verifyRecaptcha } from "@/lib/recaptcha/verify";
+import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const verifiedUserId = user.id;
+
   let body: unknown;
   try {
     body = await request.json();
@@ -26,13 +39,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: RECAPTCHA_USER_ERROR }, { status: 400 });
   }
 
-  const { userId, fullName, email, marketingConsent } = parsed.data;
+  const { fullName, email, marketingConsent } = parsed.data;
 
   try {
     const service = createServiceRoleClient();
     const { error } = await service.from("customers").upsert(
       {
-        id: userId,
+        id: verifiedUserId,
         full_name: fullName,
         marketing_consent: marketingConsent,
       },

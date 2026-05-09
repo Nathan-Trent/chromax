@@ -10,7 +10,7 @@ export async function POST(request: Request) {
   }
   if (
     !hasPermission(ctx.roles, "orders", "fulfil") &&
-    !hasPermission(ctx.roles, "erp_sync", "view")
+    !hasPermission(ctx.roles, "erp_sync", "edit")
   ) {
     return NextResponse.json({ error: "You don't have permission" }, { status: 403 });
   }

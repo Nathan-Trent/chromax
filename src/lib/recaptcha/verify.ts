@@ -26,17 +26,17 @@ export async function verifyRecaptcha(
   expectedAction?: string,
   minScore = 0.5,
 ): Promise<RecaptchaResult> {
-  const secret = process.env.RECAPTCHA_SECRET_KEY;
-  if (!secret || secret.trim() === "") {
-    console.warn(
-      "[recaptcha] RECAPTCHA_SECRET_KEY is not set; skipping verification (development mode)",
-    );
-    return { success: true, score: 1, action: "" };
+  if (!token || token.trim() === "") {
+    return { success: false, score: 0, action: "" };
   }
 
-  if (!token || token.trim() === "") {
+  const secret = process.env.RECAPTCHA_SECRET_KEY?.trim() ?? "";
+  if (!secret) {
+    if (process.env.NODE_ENV === "production") {
+      return { success: false, score: 0, action: "" };
+    }
     console.warn(
-      "[recaptcha] Empty or missing token; skipping verification (script may be blocked)",
+      "[recaptcha] RECAPTCHA_SECRET_KEY is not set; verification bypassed (development only)",
     );
     return { success: true, score: 1, action: "" };
   }

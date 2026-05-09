@@ -17,7 +17,7 @@ values
     "users":        {"view": true, "create": true, "edit": true, "delete": true},
     "workflows":    {"view": true, "edit": true},
     "audit_log":    {"view": true},
-    "erp_sync":     {"view": true},
+    "erp_sync":     {"view": true, "edit": true},
     "ai_leads":     {"view": true, "create": true, "edit": true, "delete": true}
   }'::jsonb,
   true
@@ -37,7 +37,7 @@ values
     "users":        {"view": false, "create": false, "edit": false, "delete": false},
     "workflows":    {"view": false, "edit": false},
     "audit_log":    {"view": false},
-    "erp_sync":     {"view": false},
+    "erp_sync":     {"view": false, "edit": false},
     "ai_leads":     {"view": false, "create": false, "edit": false, "delete": false}
   }'::jsonb,
   true
@@ -57,7 +57,7 @@ values
     "users":        {"view": false, "create": false, "edit": false, "delete": false},
     "workflows":    {"view": false, "edit": false},
     "audit_log":    {"view": false},
-    "erp_sync":     {"view": true},
+    "erp_sync":     {"view": true, "edit": false},
     "ai_leads":     {"view": false, "create": false, "edit": false, "delete": false}
   }'::jsonb,
   true
@@ -77,7 +77,7 @@ values
     "users":        {"view": false, "create": false, "edit": false, "delete": false},
     "workflows":    {"view": false, "edit": false},
     "audit_log":    {"view": true},
-    "erp_sync":     {"view": false},
+    "erp_sync":     {"view": false, "edit": false},
     "ai_leads":     {"view": false, "create": false, "edit": false, "delete": false}
   }'::jsonb,
   true
@@ -97,7 +97,7 @@ values
     "users":        {"view": false, "create": false, "edit": false, "delete": false},
     "workflows":    {"view": false, "edit": false},
     "audit_log":    {"view": false},
-    "erp_sync":     {"view": false},
+    "erp_sync":     {"view": false, "edit": false},
     "ai_leads":     {"view": true, "create": false, "edit": false, "delete": false}
   }'::jsonb,
   true

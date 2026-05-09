@@ -18,7 +18,7 @@ export async function POST(
   if (!ctx) {
     return NextResponse.json({ error: "You must be signed in" }, { status: 401 });
   }
-  if (!hasPermission(ctx.roles, "erp_sync", "view")) {
+  if (!hasPermission(ctx.roles, "erp_sync", "edit")) {
     return NextResponse.json({ error: "You don't have permission" }, { status: 403 });
   }
 
